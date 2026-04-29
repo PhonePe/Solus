@@ -13,7 +13,8 @@ First off, thank you for considering contributing to Solus! It's people like you
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By
+participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
 
 ## Getting Started
 
@@ -29,13 +30,13 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 2. **Clone your fork locally**:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/solus.git
+   git clone https://github.com/YOUR-USERNAME/Solus.git
    cd solus
    ```
 
 3. **Add the upstream remote**:
    ```bash
-   git remote add upstream https://github.com/PhonePe/solus.git
+   git remote add upstream https://github.com/PhonePe/Solus.git
    ```
 
 4. **Build the project**:
@@ -52,7 +53,8 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Reporting Bugs
 
-Before creating bug reports, please check the [existing issues](https://github.com/PhonePe/solus/issues) to avoid duplicates.
+Before creating bug reports, please check the [existing issues](https://github.com/PhonePe/Solus/issues) to avoid
+duplicates.
 
 When creating a bug report, please include:
 
@@ -133,6 +135,7 @@ Follow these conventions:
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -142,6 +145,7 @@ Follow these conventions:
 - `chore`: Maintenance tasks
 
 **Example:**
+
 ```
 feat: Add support for Redis storage backend
 
@@ -247,6 +251,7 @@ To add support for a new storage backend:
 ### Recognition
 
 Contributors will be recognized in:
+
 - Release notes
 - CONTRIBUTORS.md file
 - GitHub contributors page

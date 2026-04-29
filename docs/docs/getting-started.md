@@ -10,6 +10,7 @@
 ## Add dependency
 
 ```xml
+
 <dependency>
     <groupId>com.phonepe</groupId>
     <artifactId>solus</artifactId>
@@ -17,12 +18,14 @@
 </dependency>
 ```
 
-Replace `${solus.version}` with the latest version from [Maven Central](https://central.sonatype.com/artifact/com.phonepe/solus) or [GitHub Releases](https://github.com/PhonePe/solus/releases).
+Replace `${solus.version}` with the latest version
+from [Maven Central](https://central.sonatype.com/artifact/com.phonepe/solus)
+or [GitHub Releases](https://github.com/PhonePe/solus/releases).
 
 ## Build locally
 
 ```bash
-git clone https://github.com/PhonePe/solus.git
+git clone https://github.com/PhonePe/Solus.git
 cd solus
 mvn clean install
 ```
@@ -41,23 +44,27 @@ AerospikeClient aerospikeClient = new AerospikeClient("localhost", 3000);
 
 // 2. Build the storage context
 AerospikeStorageContext storageContext = AerospikeStorageContext.builder()
-    .aerospikeClient(aerospikeClient)
-    .namespace("your-namespace")
-    .setName("deduper-set")
-    .farm("dc1")
-    .build();
+        .aerospikeClient(aerospikeClient)
+        .namespace("your-namespace")
+        .setName("deduper-set")
+        .farm("dc1")
+        .build();
 
 // 3. Build the Solus engine
 SolusEngine<String> solusEngine = SolusEngine.<String>builder()
-    .clientId("my-service")
-    .storageContext(storageContext)
-    .build();
+        .clientId("my-service")
+        .storageContext(storageContext)
+        .build();
 
 // 4. Register a deduper (creates metadata in the store)
-solusEngine.register("coupons");
+solusEngine.
+
+register("coupons");
 
 // 5. Add an entity with TTL
-solusEngine.add("coupons", "COUPON-ABC-123", 86400000L); // 24-hour TTL
+solusEngine.
+
+add("coupons","COUPON-ABC-123",86400000L); // 24-hour TTL
 
 // 6. Check if entity exists
 boolean isAbsent = solusEngine.checkAbsence("coupons", "COUPON-ABC-123");
@@ -69,7 +76,9 @@ boolean wasAdded = solusEngine.addIfAbsent("coupons", "COUPON-XYZ-789", 86400000
 ```
 
 !!! tip
-    The example above uses all default configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level). To customise these, pass a `DeDuperConfig` to the `register()` call. See [Deduplication Semantics](deduplication.md#configuration) for details.
+The example above uses all default configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level).
+To customise these, pass a `DeDuperConfig` to the `register()` call.
+See [Deduplication Semantics](deduplication.md#configuration) for details.
 
 ## What's next
 

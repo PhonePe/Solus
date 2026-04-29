@@ -7,9 +7,16 @@
     <groupId>com.phonepe</groupId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <url>https://github.com/PhonePe/solus</url>
+    <url>https://github.com/PhonePe/Solus</url>
     <description>TTL based Deduping library for (hundred+) billion scale</description>
     <inceptionYear>2025</inceptionYear>
+
+    <scm>
+        <connection>scm:git:https://github.com/PhonePe/Solus.git</connection>
+        <developerConnection>scm:git:https://github.com/PhonePe/Solus.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/PhonePe/Solus.git</url>
+    </scm>
 
     <licenses>
         <license>
@@ -51,13 +58,20 @@
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/PhonePe/solus/issues</url>
+        <url>https://github.com/PhonePe/Solus/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>Travis CI</system>
-        <url>https://travis-ci.org/PhonePe/solus</url>
+        <url>https://travis-ci.org/PhonePe/Solus</url>
     </ciManagement>
+
+    <repositories>
+        <repository>
+            <id>clojars.org</id>
+            <url>https://clojars.org/repo</url>
+        </repository>
+    </repositories>
 
     <distributionManagement>
         <snapshotRepository>
