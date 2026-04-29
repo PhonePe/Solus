@@ -1,0 +1,49 @@
+[project]
+site_name = "Solus — TTL-based Deduplication Library"
+site_url = "https://phonepe.github.io/solus"
+repo_url = "https://github.com/PhonePe/solus"
+copyright = "Copyright &copy; 2025-2026 PhonePe India Pvt. Ltd."
+nav = [
+  {"Home" = "index.md"},
+  {"Getting Started" = "getting-started.md"},
+  {"Usage" = "usage.md"},
+  {"Deduplication Semantics" = "deduplication.md"},
+  {"Storage Backends" = [
+    {"Aerospike" = "storages/aerospike.md"},
+    {"HBase" = "storages/hbase.md"}
+  ]}
+]
+
+[project.theme]
+features = [
+  "navigation.tracking",
+  "navigation.path",
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.expand",
+  "navigation.top",
+  "content.code.copy",
+  "content.code.annotate",
+  "search.suggest",
+  "search.highlight"
+]
+palette = [
+  {scheme = "default", primary = "indigo", accent = "indigo", toggle = {icon = "material/brightness-7", name = "Switch to dark mode"}},
+  {scheme = "slate", primary = "indigo", accent = "indigo", toggle = {icon = "material/brightness-4", name = "Switch to light mode"}}
+]
+icon = {repo = "fontawesome/brands/github"}
+
+[project.markdown_extensions]
+admonition = {}
+"pymdownx.details" = {}
+"pymdownx.highlight" = {anchor_linenums = true, line_spans = "__span", pygments_lang_class = true}
+"pymdownx.inlinehilite" = {}
+"pymdownx.snippets" = {}
+"pymdownx.superfences" = {custom_fences = [{name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format"}]}
+
+[project.markdown_extensions."pymdownx.tabbed"]
+alternate_style = true
+
+[project.markdown_extensions."pymdownx.emoji"]
+emoji_index     = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
