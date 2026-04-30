@@ -2,7 +2,7 @@
 site_name = "Solus — TTL-based Deduplication Library"
 site_url = "https://phonepe.github.io/Solus"
 repo_url = "https://github.com/PhonePe/Solus"
-copyright = "Copyright &copy; 2025-2026 PhonePe India Pvt. Ltd."
+copyright = "Copyright &copy; 2026-2027 PhonePe India Pvt. Ltd."
 nav = [
     { "Home" = "index.md" },
     { "Getting Started" = "getting-started.md" },

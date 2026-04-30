@@ -1,8 +1,15 @@
 # Solus
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.phonepe/solus.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.phonepe%22%20AND%20a:%22solus%22)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://github.com/PhonePe/solus/workflows/Build/badge.svg)](https://github.com/PhonePe/Solus/actions)
+([![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=bugs)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus))
 
 **Solus** is a high-performance, TTL-based deduplication library designed for (hundred+) billion scale operations. It
 uses probabilistic data structures (Bloom filters) with sharding to provide memory-efficient duplicate detection with
@@ -53,9 +60,11 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.phonepe</groupId>
     <artifactId>solus</artifactId>
-    <version>1.0.0</version>
+    <version>${solus.version}</version>
 </dependency>
 ```
+
+> **Note:** Find the latest version on [Maven Central](https://search.maven.org/artifact/com.phonepe/solus).
 
 ### Gradle
 
@@ -525,7 +534,7 @@ Please report issues on [GitHub Issues](https://github.com/PhonePe/Solus/issues)
 Solus is licensed under the [Apache License 2.0](LICENSE).
 
 ```
-Copyright 2025 PhonePe India Pvt. Ltd.
+Copyright 2026 PhonePe India Pvt. Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
