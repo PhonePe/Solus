@@ -1,15 +1,15 @@
 # Solus
 
-([![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=bugs)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_solus&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_solus))
+([![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=bugs)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=PhonePe_Solus&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=PhonePe_Solus))
 
 **Solus** is a high-performance, TTL-based deduplication library designed for (hundred+) billion scale operations. It
 uses probabilistic data structures (Bloom filters) with sharding to provide memory-efficient duplicate detection with
