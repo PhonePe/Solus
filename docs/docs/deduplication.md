@@ -21,6 +21,7 @@ DeDuperConfig config = DeDuperConfig.builder()
 ```
 
 !!! warning "Immutable after registration"
+    
     Once a deduper is registered, its configuration cannot be changed. Attempting to re-register with a different config throws `SolusException` with `ErrorCode.DEDUPER_CONFIG_MISMATCH`.
 
 ## Deduplication levels
@@ -49,13 +50,16 @@ Deduplication is isolated to each datacenter. Each farm maintains independent Bl
 Use `DC` when you need independent deduplication per region or when cross-DC replication introduces unacceptable latency.
 
 !!! warning "DC consistency"
+    
     With `DC` level, the same entity can be added independently in different datacenters without conflict. This is by design — each DC maintains its own Bloom filter state.
 
 ## Capacity planning
 
 The maximum key space is calculated as:
 
-$$\text{maxKeys} = \text{noOfShards} \times \text{bitsPerShard}$$
+```
+maxKeys = noOfShards × bitsPerShard
+```
 
 With maximum configuration (150M shards × 30K bits), Solus can handle up to **4.5 trillion** unique keys.
 
@@ -63,17 +67,21 @@ With maximum configuration (150M shards × 30K bits), Solus can handle up to **4
 
 The false positive probability for a Bloom filter is approximately:
 
-$$(1 - e^{-kn/m})^k$$
+```
+P(false positive) ≈ (1 - e^(-kn/m))^k
+```
 
 Where:
 
-- $k$ = number of hash functions (`noOfHashFunctions`)
-- $n$ = number of elements inserted
-- $m$ = total number of bits (`noOfShards × bitsPerShard`)
+- `k` = number of hash functions (`noOfHashFunctions`)
+- `n` = number of elements inserted
+- `m` = total number of bits (`noOfShards × bitsPerShard`)
 
 The optimal number of hash functions to minimize false positives:
 
-$$k_{opt} = \frac{m}{n} \times \ln(2)$$
+```
+k_opt = (m / n) × ln(2)
+```
 
 ### Recommended configurations
 

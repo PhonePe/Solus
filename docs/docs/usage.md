@@ -12,40 +12,41 @@
 
 === "Aerospike"
 
-    ```java
-    AerospikeStorageContext storageContext = AerospikeStorageContext.builder()
+```java
+AerospikeStorageContext storageContext = AerospikeStorageContext.builder()
         .aerospikeClient(aerospikeClient)
         .namespace("your-namespace")
         .setName("deduper-set")
         .farm("dc1")
         .build();
 
-    SolusEngine<String> solusEngine = SolusEngine.<String>builder()
+SolusEngine<String> solusEngine = SolusEngine.<String>builder()
         .clientId("my-service")
         .storageContext(storageContext)
         .build();
-    ```
+```
 
 === "HBase"
 
-    ```java
-    HBaseTableConnection tableConnection = new HBaseTableConnection(false, hbaseConnection);
+```java
+HBaseTableConnection tableConnection = new HBaseTableConnection(false, hbaseConnection);
 
-    HBaseStorageContext storageContext = HBaseStorageContext.builder()
+HBaseStorageContext storageContext = HBaseStorageContext.builder()
         .connection(tableConnection)
         .tableName("solus_deduper")
         .farm("dc1")
         .build();
 
-    SolusEngine<String> solusEngine = SolusEngine.<String>builder()
+SolusEngine<String> solusEngine = SolusEngine.<String>builder()
         .clientId("my-service")
         .storageContext(storageContext)
         .build();
-    ```
+```
 
 !!! warning
-For HBase, the `HBaseStorageContext` constructor automatically creates the table if it does not exist, with GZ
-compression, a single column family, and pre-split regions for optimal distribution.
+
+    For HBase, the `HBaseStorageContext` constructor automatically creates the table if it does not exist, with GZ
+    compression, a single column family, and pre-split regions for optimal distribution.
 
 ## Register a deduper
 
@@ -63,14 +64,13 @@ DeDuperConfig config = DeDuperConfig.builder()
         .deDuperLevel(DeDuperLevel.XDC)
         .build();
 
-solusEngine.
-
-register("high-volume-deduper",config);
+solusEngine.register("high-volume-deduper", config);
 ```
 
 !!! info
-If a deduper with the same name already exists and its configuration matches, registration succeeds silently. If the
-configuration differs, a `SolusException` with `ErrorCode.DEDUPER_CONFIG_MISMATCH` is thrown.
+
+    If a deduper with the same name already exists and its configuration matches, registration succeeds silently. If the
+    configuration differs, a `SolusException` with `ErrorCode.DEDUPER_CONFIG_MISMATCH` is thrown.
 
 ### Unregister
 
@@ -109,10 +109,12 @@ Set<String> entities = Set.of("COUPON-1", "COUPON-2", "COUPON-3");
 Map<String, Boolean> results = solusEngine.checkAbsence("coupons", entities);
 ```
 
-!!! note "Probabilistic guarantees"
-Due to the nature of Bloom filters, `checkAbsence()` returning `false` **guarantees** the entity was seen before.
-Returning `true` has a small probability of being a false positive (the entity was actually seen, but the filter missed
-it). See [False Positive Rates](deduplication.md#false-positive-rates) for details.
+!!! note "Probabilistic guarantees" 
+    
+    Due to the nature of Bloom filters, `checkAbsence()` returning `false` **guarantees** the entity was seen before.
+    Returning `true` has a small probability of being a false positive (the entity was actually seen, but the filter missedit). 
+    
+See [False Positive Rates](deduplication.md#false-positive-rates) for details.
 
 ### Add entities
 
@@ -121,13 +123,11 @@ backend.
 
 ```java
 // Single entity — TTL in milliseconds
-solusEngine.add("coupons","COUPON-ABC-123",86400000L); // 24-hour TTL
+solusEngine.add("coupons", "COUPON-ABC-123", 86400000L); // 24-hour TTL
 
 // Batch
 Set<String> entities = Set.of("COUPON-1", "COUPON-2", "COUPON-3");
-solusEngine.
-
-add("coupons",entities, 86400000L);
+solusEngine.add("coupons", entities, 86400000L);
 ```
 
 ### Atomic add-if-absent
@@ -148,38 +148,19 @@ All operations throw `SolusException`. Use `getErrorCode()` to distinguish failu
 
 ```java
 try{
-        solusEngine.getDeDuper("non-existent");
-}catch(
-SolusException e){
-        switch(e.
-
-getErrorCode()){
-        case DEDUPER_NOT_FOUND ->log.
-
-warn("Deduper does not exist");
-        case INVALID_CONFIG ->log.
-
-error("Configuration validation failed",e);
-        case DEDUPER_CONFIG_MISMATCH ->log.
-
-error("Config mismatch on re-registration",e);
-        case AEROSPIKE_ERROR ->log.
-
-error("Aerospike backend error",e);
-        case HBASE_ERROR ->log.
-
-error("HBase backend error",e);
-        case TABLE_CREATION_ERROR ->log.
-
-error("HBase table creation failed",e);
-        case CACHE_ERROR ->log.
-
-error("Internal cache error",e);
-        case INTERNAL_ERROR ->log.
-
-error("Unexpected error",e);
+    solusEngine.getDeDuper("non-existent");
+} catch(SolusException e){
+        switch(e.getErrorCode()){
+        case DEDUPER_NOT_FOUND -> log.warn("Deduper does not exist");
+        case INVALID_CONFIG -> log.error("Configuration validation failed", e);
+        case DEDUPER_CONFIG_MISMATCH -> log.error("Config mismatch on re-registration", e);
+        case AEROSPIKE_ERROR -> log.error("Aerospike backend error", e);
+        case HBASE_ERROR -> log.error("HBase backend error", e);
+        case TABLE_CREATION_ERROR -> log.error("HBase table creation failed", e);
+        case CACHE_ERROR -> log.error("Internal cache error", e);
+        case INTERNAL_ERROR -> log.error("Unexpected error", e);
     }
-            }
+}
 ```
 
 See [Error Codes](deduplication.md#error-codes) for the full list.
@@ -210,27 +191,20 @@ DeDuperConfig config = DeDuperConfig.builder()
         .deDuperLevel(DeDuperLevel.XDC)
         .build();
 
-solusEngine.
-
-register("coupon-deduper",config);
+solusEngine.register("coupon-deduper",config);
 
 // ── Use (request handling) ──
 String couponCode = "SUMMER-SALE-2026";
 boolean wasAdded = solusEngine.addIfAbsent("coupon-deduper", couponCode, 86400000L);
-if(wasAdded){
-
-// First time — process the coupon
-processCoupon(couponCode);
-}else{
-        // Duplicate — reject
-        throw new
-
-IllegalStateException("Coupon already redeemed");
+if(wasAdded) {
+    // First time — process the coupon
+    processCoupon(couponCode);
+} else {
+    // Duplicate — reject
+    throw new IllegalStateException("Coupon already redeemed");
 }
 
 // ── Teardown (application shutdown) ──
 // Unregister if no longer needed
-        solusEngine.
-
-unregister("coupon-deduper");
+solusEngine.unregister("coupon-deduper");
 ```
