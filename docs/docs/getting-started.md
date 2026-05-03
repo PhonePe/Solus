@@ -30,7 +30,7 @@ cd solus
 mvn clean install
 ```
 
-To run the tests:
+To run the tests (Docker must be running):
 
 ```bash
 mvn clean test
@@ -57,14 +57,10 @@ SolusEngine<String> solusEngine = SolusEngine.<String>builder()
         .build();
 
 // 4. Register a deduper (creates metadata in the store)
-solusEngine.
-
-register("coupons");
+solusEngine.register("coupons");
 
 // 5. Add an entity with TTL
-solusEngine.
-
-add("coupons","COUPON-ABC-123",86400000L); // 24-hour TTL
+solusEngine.add("coupons","COUPON-ABC-123",86400000L); // 24-hour TTL
 
 // 6. Check if entity exists
 boolean isAbsent = solusEngine.checkAbsence("coupons", "COUPON-ABC-123");
@@ -76,8 +72,9 @@ boolean wasAdded = solusEngine.addIfAbsent("coupons", "COUPON-XYZ-789", 86400000
 ```
 
 !!! tip
-The example above uses all default configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level).
-To customise these, pass a `DeDuperConfig` to the `register()` call.
+
+    The example above uses all default configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level).
+    To customise these, pass a `DeDuperConfig` to the `register()` call.
 See [Deduplication Semantics](deduplication.md#configuration) for details.
 
 ## What's next
