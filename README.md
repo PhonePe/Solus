@@ -31,7 +31,7 @@ configurable accuracy.
 
 ## Documentation
 
-Detailed documentation is available at **[https://phonepe.github.io/solus](https://phonepe.github.io/solus)**
+Detailed documentation is available at **[https://phonepe.github.io/Solus](https://phonepe.github.io/Solus)**
 
 - [Getting Started](docs/docs/getting-started.md)
 - [Usage Guide](docs/docs/usage.md)
