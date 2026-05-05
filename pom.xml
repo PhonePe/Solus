@@ -90,6 +90,7 @@
         <jdk.source.version>17</jdk.source.version>
         <jdk.target.version>17</jdk.target.version>
         <jdk.release.version>17</jdk.release.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--        Maven related properties -->
         <maven.compiler.plugin.version>3.9.0</maven.compiler.plugin.version>
@@ -97,6 +98,7 @@
         <maven.source.plugin.version>3.2.0</maven.source.plugin.version>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <maven.sonar.plugin.version>3.9.1.2184</maven.sonar.plugin.version>
+        <lombok.maven.plugin.version>1.18.20.0</lombok.maven.plugin.version>
         <maven.javadoc.plugin.version>3.3.1</maven.javadoc.plugin.version>
         <maven.surefire.plugin.version>3.0.0-M8</maven.surefire.plugin.version>
         <sonatype.central.publishing.maven.plugin.version>0.5.0</sonatype.central.publishing.maven.plugin.version>
@@ -276,6 +278,24 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>${lombok.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>src/main/java</sourceDirectory>
+                            <outputDirectory>${project.basedir}/delombok</outputDirectory>
+                            <addOutputDirectory>false</addOutputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
