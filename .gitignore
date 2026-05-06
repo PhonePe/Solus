@@ -7,5 +7,5 @@
 .project
 .settings/
 .config
-
+/delombok/
 /bin/
