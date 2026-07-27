@@ -26,7 +26,6 @@ import com.aerospike.client.BatchRead;
 import com.aerospike.client.BatchWrite;
 import com.aerospike.client.ResultCode;
 import com.aerospike.client.Operation;
-import com.aerospike.client.policy.BatchPolicy;
 import com.aerospike.client.policy.BatchWritePolicy;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
@@ -83,11 +82,11 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
                        final long ttl) {
+        final int ttlSeconds = AerospikeUtils.toTtlSeconds(ttl);
         try {
             final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
             writePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-            // Set record expiration from the same TTL used to calculate the logical bit expiry.
-            writePolicy.expiration = (int) Math.ceil(ttl / 1000.0);
+            writePolicy.expiration = ttlSeconds;
             writePolicy.sendKey = true;
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
@@ -113,15 +112,13 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
                             final long ttl) {
+        final int ttlSeconds = AerospikeUtils.toTtlSeconds(ttl);
         try {
             // alter operations for all bits with new ttl
-            final BatchPolicy batchPolicy = aerospikeClient.getBatchPolicyDefault();
             final Long expiryTime = new Date().getTime() + ttl;
-            // Set record expiration from the same TTL used to calculate the logical bit expiry.
-            final List<BatchRecord> batchWrites = buildBatchWrites(
-                    deDuperName, level, shardGroupedEntities, expiryTime, (int) Math.ceil(ttl / 1000.0));
+            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, ttlSeconds);
             AerospikeUtils.retryer.call(() ->
-                    aerospikeClient.operate(batchPolicy, batchWrites));
+                    aerospikeClient.operate(aerospikeClient.getBatchPolicyDefault(), batchWrites));
         } catch (ExecutionException e) {
             throw SolusException.propagate(ErrorMessages.UPDATE_BIN_ERROR, e, ErrorCode.AEROSPIKE_ERROR);
         } catch (RetryException e) {
@@ -256,10 +253,10 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                                                final DeDuperLevel level,
                                                final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
                                                final Long expiryTime,
-                                               final int recordExpiration) {
+                                               final int ttlSeconds) {
         final BatchWritePolicy batchWritePolicy = new BatchWritePolicy(aerospikeClient.getBatchWritePolicyDefault());
         batchWritePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-        batchWritePolicy.expiration = recordExpiration;
+        batchWritePolicy.expiration = ttlSeconds;
         batchWritePolicy.sendKey = true;
         return shardGroupedEntities.entrySet()
                 .stream()
@@ -272,7 +269,7 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                             )
                             .collect(Collectors.toSet());
                     final Operation[] operations = allBins.stream()
-                            .map(binName -> Operation.put(new Bin(binName, Value.get(expiryTime))))
+                            .map(binName -> Operation.add(new Bin(binName, Value.get(expiryTime))))
                             .toArray(Operation[]::new);
                     return Pair.of(
                             new Key(namespace, getSetName(level), buildDeDuperKey(deDuperName, shardEntitiesEntry.getKey())),

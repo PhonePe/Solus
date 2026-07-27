@@ -56,7 +56,8 @@ public class SolusEngine<T> {
      */
     public void register(final String name) {
         log.info("No DeDuper config provided. Registering with default config. noOfHashFunctions: {}, noOfShards {}, bitsPerShard: {}",
-                DeDuperConfig.MIN_NUMBER_OF_HASH_FUNCTION, DeDuperConfig.MIN_NUMBER_OF_SHARDS, DeDuperConfig.MIN_BITS_PER_SHARD);
+                DeDuperConfig.MIN_NUMBER_OF_HASH_FUNCTION, DeDuperConfig.DEFAULT_NUMBER_OF_SHARDS,
+                DeDuperConfig.MIN_BITS_PER_SHARD);
         register(name, DeDuperConfig.builder().build());
     }
 

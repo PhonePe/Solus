@@ -66,6 +66,10 @@ public class AerospikeUtils {
         return BIN_FORMAT_V2.formatted(farm, binSuffix);
     }
 
+    public int toTtlSeconds(final long ttlInMs) {
+        return Math.toIntExact(Math.floorDiv(ttlInMs - 1, 1000) + 1);
+    }
+
     public String getLatestUpdatedFarm(final Record asRecord, final String binSuffix) {
         if (Objects.isNull(asRecord)) {
             return null;

@@ -34,7 +34,8 @@ public class DeDuperConfig {
      */
     public static final int MIN_NUMBER_OF_HASH_FUNCTION = 7;
     public static final int MAX_NUMBER_OF_HASH_FUNCTION = 13;
-    public static final long MIN_NUMBER_OF_SHARDS = 10000000;
+    public static final long MIN_NUMBER_OF_SHARDS = 1000000;
+    public static final long DEFAULT_NUMBER_OF_SHARDS = 10000000;
     public static final long MAX_NUMBER_OF_SHARDS = 150000000;
     public static final int MIN_BITS_PER_SHARD = 1000;
     public static final int MAX_BITS_PER_SHARD = 30000;
@@ -46,7 +47,7 @@ public class DeDuperConfig {
     @Min(MIN_NUMBER_OF_SHARDS)
     @Max(MAX_NUMBER_OF_SHARDS)
     @Builder.Default
-    private long noOfShards = MIN_NUMBER_OF_SHARDS;
+    private long noOfShards = DEFAULT_NUMBER_OF_SHARDS;
     @Min(MIN_BITS_PER_SHARD)
     @Max(MAX_BITS_PER_SHARD)
     @Builder.Default
