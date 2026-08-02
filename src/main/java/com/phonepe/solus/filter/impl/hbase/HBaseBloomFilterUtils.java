@@ -22,6 +22,7 @@ import com.sematext.hbase.ds.RowKeyDistributorByHashPrefix;
 import com.sematext.hbase.ds.RowKeyDistributorByHashPrefix.Hasher;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,7 +63,7 @@ public class HBaseBloomFilterUtils {
         return gets;
     }
 
-    public Map<Long, List<Integer>> getResultMap(Result[] results) {
+    public Map<Long, List<Integer>> getResultMap(Result[] results, long currentTime) {
         Map<Long, List<Integer>> resultMap = new HashMap<>();
         Arrays.stream(results)
                 .filter(result -> Objects.nonNull(result) && !result.isEmpty())
@@ -73,21 +74,37 @@ public class HBaseBloomFilterUtils {
                         if (Constants.SHARD_ID_COL_NAME.equals(Bytes.toString(qualifier))
                                 && !resultMap.containsKey(Bytes.toLong(latestValue))) {
                             resultMap.put(Bytes.toLong(latestValue), list);
-                        } else {
-                            if (Bytes.toBoolean(latestValue)) {
-                                list.add(Bytes.toInt(qualifier));
-                            }
+                        } else if (isBitSet(latestValue, currentTime)) {
+                            list.add(Bytes.toInt(qualifier));
                         }
                     }));
                 });
         return resultMap;
     }
 
+    /**
+     * Checks a stored cell value during reads. Legacy cells contain a single-byte boolean
+     * marker, while current cells store the logical expiry time as a long. This dual-format
+     * handling allows backward compatibility with existing cells
+     */
+    public boolean isBitSet(byte[] value, long currentTime) {
+        if (Objects.isNull(value)) {
+            return false;
+        }
+        return switch (value.length) {
+            case Bytes.SIZEOF_BOOLEAN -> Bytes.toBoolean(value);
+            case Bytes.SIZEOF_LONG -> Bytes.toLong(value) >= currentTime;
+            default -> false;
+        };
+    }
+
     public <E> List<Put> createBatchPuts(Map<Long, List<EntityWithBitPositions<E>>> map,
                                          long ttl,
                                          String columnFamilyName,
                                          String clientId,
-                                         String deDuperName) {
+                                         String deDuperName,
+                                         Long deduperTtl) {
+        final Long expiryTime = new Date().getTime() + ttl;
         List<Put> puts = new LinkedList<>();
         map.forEach((key, value) -> {
             Put put = new Put(rowKeyWithPrefix(Bytes.toBytes(getRowKey(key, clientId, deDuperName))));
@@ -95,10 +112,10 @@ public class HBaseBloomFilterUtils {
                     Bytes.toBytes(key));
             value.forEach(entityWithBitPositions -> {
                 for (int bitPosition : entityWithBitPositions.getBitPositions()) {
-                    put.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition), Bytes.toBytes(true));
+                    put.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition), Bytes.toBytes(expiryTime));
                 }
             });
-            put.setTTL(ttl);
+            put.setTTL(deduperTtl);
             puts.add(put);
         });
         return puts;

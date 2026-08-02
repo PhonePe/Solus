@@ -16,9 +16,12 @@
 
 package com.phonepe.solus;
 
+import com.phonepe.solus.filter.impl.hbase.HBaseBloomFilterUtils;
 import com.phonepe.solus.shard.ShardCalculator;
+import com.phonepe.solus.util.AerospikeUtils;
 import com.phonepe.solus.util.SizeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,6 +42,26 @@ public class UtilsTest {
         long shardId = shardCalculator.getShardId(10000L, numShards);
         Assert.assertTrue(shardId < numShards);
         Assert.assertEquals(shardId, shardCalculator.getShardId(10000L, numShards));
+    }
+
+    @Test
+    public void testHBaseBitSetDualRead() {
+        final long now = System.currentTimeMillis();
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(null, now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(false), now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(now + 10000L), now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(now - 10000L), now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes("unknown"), now));
+    }
+
+    @Test
+    public void testAerospikeToTtlSeconds() {
+        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1L));
+        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(999L));
+        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1000L));
+        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1500L));
+        Assert.assertEquals(60, AerospikeUtils.toTtlSeconds(60000L));
     }
 
 }

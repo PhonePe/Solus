@@ -47,6 +47,10 @@ public class AerospikeUtils {
             .withBlockStrategy(BlockStrategies.threadSleepStrategy())
             .build();
 
+    public static int toTtlSeconds(long ttlInMs) {
+        return (int) Math.max(1, TimeUnit.MILLISECONDS.toSeconds(ttlInMs));
+    }
+
     public Object getFarmSpecificBinValue(final Record asRecord, final String binSuffix, final String farm) {
         return asRecord.bins.getOrDefault(BIN_FORMAT.formatted(farm, binSuffix), asRecord.bins.get(binSuffix));
     }
@@ -64,10 +68,6 @@ public class AerospikeUtils {
 
     public String getBinV2(final String binSuffix, final String farm) {
         return BIN_FORMAT_V2.formatted(farm, binSuffix);
-    }
-
-    public int toTtlSeconds(final long ttlInMs) {
-        return Math.toIntExact(Math.floorDiv(ttlInMs - 1, 1000) + 1);
     }
 
     public String getLatestUpdatedFarm(final Record asRecord, final String binSuffix) {

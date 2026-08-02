@@ -23,6 +23,7 @@ import lombok.Data;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -54,6 +55,12 @@ public class DeDuperConfig {
     private int bitsPerShard = MIN_BITS_PER_SHARD;
     @Builder.Default
     private DeDuperLevel deDuperLevel = DeDuperLevel.XDC; // For Backward compatibility
+    /**
+     * Deduper-level TTL in milliseconds. Limits per-entity TTLs and defaults no-TTL add APIs.
+     */
+    @NotNull
+    @Builder.Default
+    private Long ttlInMs = 1_000_000_000L;
 
     @JsonIgnore
     public boolean isEqual(final DeDuperConfig deDuperConfig) {

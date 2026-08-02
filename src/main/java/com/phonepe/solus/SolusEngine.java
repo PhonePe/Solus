@@ -143,10 +143,22 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entity      The entity to add.
      * @param ttlInMs     The time-to-live (TTL) for the entity in milliseconds.
+     *                    The value is limited to DeDuperConfig.ttlInMs.
      */
     public void add(final String deDuperName, final T entity, final long ttlInMs) {
         final DeDuper deDuper = getCachedDeDuper(deDuperName);
         deDuperDataCommands.add(deDuper, entity, ttlInMs);
+    }
+
+    /**
+     * Adds an entity to the DeDuper with a time-to-live (TTL) configured in Deduper .
+     *
+     * @param deDuperName The name of the DeDuper to use.
+     * @param entity      The entity to add.
+     */
+    public void add(final String deDuperName, final T entity) {
+        final DeDuper deDuper = getCachedDeDuper(deDuperName);
+        deDuperDataCommands.add(deDuper, entity, deDuper.getDeDuperConfig().getTtlInMs());
     }
 
     /**
@@ -155,10 +167,22 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entities    A set of entities to add.
      * @param ttlInMs     The time-to-live (TTL) for the entities in milliseconds.
+     *                    The value is limited to DeDuperConfig.ttlInMs.
      */
     public void add(final String deDuperName, final Set<T> entities, final long ttlInMs) {
         final DeDuper deDuper = getCachedDeDuper(deDuperName);
         deDuperDataCommands.add(deDuper, entities, ttlInMs);
+    }
+
+    /**
+     * Adds multiple entities to the DeDuper with a time-to-live (TTL) configured in Deduper .
+     *
+     * @param deDuperName The name of the DeDuper to use.
+     * @param entities    A set of entities to add.
+     */
+    public void add(final String deDuperName, final Set<T> entities) {
+        final DeDuper deDuper = getCachedDeDuper(deDuperName);
+        deDuperDataCommands.add(deDuper, entities, deDuper.getDeDuperConfig().getTtlInMs());
     }
 
     /**
@@ -167,6 +191,7 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entity      The entity to add if absent.
      * @param ttlInMs     The time-to-live (TTL) for the entity in milliseconds.
+     *                    The value is limited to DeDuperConfig.ttlInMs.
      * @return True if the entity was added, false if it was already present.
      */
     public boolean addIfAbsent(final String deDuperName, final T entity, final long ttlInMs) {
@@ -175,15 +200,40 @@ public class SolusEngine<T> {
     }
 
     /**
+     * Adds an entity to the DeDuper if it is absent, with a time-to-live (TTL) configured in Deduper .
+     *
+     * @param deDuperName The name of the DeDuper to use.
+     * @param entity      The entity to add if absent.
+     * @return True if the entity was added, false if it was already present.
+     */
+    public boolean addIfAbsent(final String deDuperName, final T entity) {
+        final DeDuper deDuper = getCachedDeDuper(deDuperName);
+        return deDuperDataCommands.addIfAbsent(deDuper, entity, deDuper.getDeDuperConfig().getTtlInMs());
+    }
+
+    /**
      * Adds multiple entities to the DeDuper if they are absent, with a specified time-to-live (TTL).
      *
      * @param deDuperName The name of the DeDuper to use.
      * @param entities    A set of entities to add if absent.
      * @param ttlInMs     The time-to-live (TTL) for the entities in milliseconds.
+     *                    The value is limited to DeDuperConfig.ttlInMs.
      * @return A map of entities to their addition status (true if added, false if already present).
      */
     public Map<T, Boolean> addIfAbsent(final String deDuperName, final Set<T> entities, final long ttlInMs) {
         final DeDuper deDuper = getCachedDeDuper(deDuperName);
         return deDuperDataCommands.addIfAbsent(deDuper, entities, ttlInMs);
+    }
+
+    /**
+     * Adds multiple entities to the DeDuper if they are absent, with a time-to-live (TTL) configured in Deduper .
+     *
+     * @param deDuperName The name of the DeDuper to use.
+     * @param entities    A set of entities to add if absent.
+     * @return A map of entities to their addition status (true if added, false if already present).
+     */
+    public Map<T, Boolean> addIfAbsent(final String deDuperName, final Set<T> entities) {
+        final DeDuper deDuper = getCachedDeDuper(deDuperName);
+        return deDuperDataCommands.addIfAbsent(deDuper, entities, deDuper.getDeDuperConfig().getTtlInMs());
     }
 }

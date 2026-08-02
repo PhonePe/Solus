@@ -59,6 +59,7 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
     private static final String BITS_PER_SHAR_COL = "bps";
     private static final String ACTIVE_COL = "a";
     private static final String LEVEL_COL = "level";
+    private static final String TTL_IN_MS_COL = "ttl";
     private final String clientId;
     private final HBaseTableConnection connection;
 
@@ -88,6 +89,8 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                 Bytes.toBytes(true));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(LEVEL_COL),
                 Bytes.toBytes(deDuperConfig.getDeDuperLevel().getValue()));
+        put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(TTL_IN_MS_COL),
+                Bytes.toBytes(deDuperConfig.getTtlInMs()));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(CREATED_TIME_COL),
                 Bytes.toBytes(System.currentTimeMillis()));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(UPDATED_TIME_COL),
@@ -184,7 +187,9 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                 new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
                         Bytes.toBytes(ACTIVE_COL)),
                 new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
-                        Bytes.toBytes(LEVEL_COL)));
+                        Bytes.toBytes(LEVEL_COL)),
+                new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
+                        Bytes.toBytes(TTL_IN_MS_COL)));
         try {
             final Map<HBaseGetCommand.ColumnInfo, byte[]> columnInfoMap = HBaseGetCommand.builder()
                     .hBaseConnection(connection)
@@ -233,6 +238,11 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                                             ? DeDuperLevel.valueOf(Bytes.toString(level))
                                             : DeDuperLevel.XDC
                                     )
+                                    .ttlInMs(Bytes.toLong(columnInfoMap.get(
+                                            new HBaseGetCommand.ColumnInfo(
+                                                    Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
+                                                    Bytes.toBytes(TTL_IN_MS_COL))
+                                    )))
                                     .build())
                             .clientId(clientId)
                             .build());

@@ -81,12 +81,15 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final long shardId,
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
-                       final long ttl) {
-        final int ttlSeconds = AerospikeUtils.toTtlSeconds(ttl);
+                       final long ttl,
+                       final long deduperTtl) {
         try {
             final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
             writePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-            writePolicy.expiration = ttlSeconds;
+            // Per-entity TTL determines the logical expiryTime stored in each bin; deduperTtl is
+            // converted to seconds and applied at the storage level so the record expires after
+            // the configured deduper TTL.
+            writePolicy.expiration = AerospikeUtils.toTtlSeconds(deduperTtl);
             writePolicy.sendKey = true;
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
@@ -111,12 +114,13 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
     public void batchUpdate(final String deDuperName,
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
-                            final long ttl) {
-        final int ttlSeconds = AerospikeUtils.toTtlSeconds(ttl);
+                            final long ttl,
+                            final long deduperTtl) {
+
         try {
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
-            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, ttlSeconds);
+            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, AerospikeUtils.toTtlSeconds(deduperTtl));
             AerospikeUtils.retryer.call(() ->
                     aerospikeClient.operate(aerospikeClient.getBatchPolicyDefault(), batchWrites));
         } catch (ExecutionException e) {
@@ -256,6 +260,7 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                                                final int ttlSeconds) {
         final BatchWritePolicy batchWritePolicy = new BatchWritePolicy(aerospikeClient.getBatchWritePolicyDefault());
         batchWritePolicy.recordExistsAction = RecordExistsAction.UPDATE;
+        // deduperTtl (already converted to seconds) drives the storage-level record expiration.
         batchWritePolicy.expiration = ttlSeconds;
         batchWritePolicy.sendKey = true;
         return shardGroupedEntities.entrySet()

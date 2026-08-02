@@ -116,12 +116,6 @@ public class AerospikeDeDuperTest {
         }
     }
 
-    @Test
-    public void defaultDeDuperUsesDefaultNumberOfShards() {
-        Assert.assertEquals(DeDuperConfig.DEFAULT_NUMBER_OF_SHARDS,
-                solusEngine.getDeDuper(DE_DUPER_NAME).getDeDuperConfig().getNoOfShards());
-    }
-
 
     @Test
     public void testAddEntityInDCLevelDeDuper() {

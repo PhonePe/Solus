@@ -22,14 +22,21 @@ AerospikeStorageContext storageContext = AerospikeStorageContext.builder()
 
 ## How deduplication works
 
-Aerospike records represent individual Bloom filter shards. Each bit position in the shard is stored as a separate bin with a TTL.
+Aerospike records represent individual Bloom filter shards. Each bit position in the shard is stored as a separate bin whose value is the logical `expireTime` timestamp. The record itself expires after the deduper-level TTL configured in `DeDuperConfig.ttlInMs`.
 
 ### Data storage
 
 1. An entity is hashed to determine its shard ID via Murmur3-128.
 2. Multiple hash functions (MD5-based) compute the bit positions within the shard.
-3. Each bit position is written as an Aerospike bin with the requested TTL.
-4. To check absence, the bins for all computed bit positions are read — if any are missing, the entity is considered absent.
+3. Each bit position is written as an Aerospike bin. The bin value is `now + perEntityTtl`, where `perEntityTtl` is the TTL passed to `add(...)` (default uses `DeDuperConfig.ttlInMs`).
+4. To check absence, the bins for all computed bit positions are read — if any are missing or the stored `expireTime` has passed, the entity is considered absent.
+
+### TTL behavior
+
+Two TTL values are in play:
+
+- **Per-entity TTL** — passed to `add(..., ttlInMs)`. If no TTL is passed, `DeDuperConfig.ttlInMs` is used. The value is limited to `DeDuperConfig.ttlInMs`.
+- **Deduper-level TTL** — `DeDuperConfig.ttlInMs`. It drives the record expiration.
 
 ### Key format
 
