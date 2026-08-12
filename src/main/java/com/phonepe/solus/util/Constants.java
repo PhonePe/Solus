@@ -24,6 +24,7 @@ public final class Constants {
     public static final String REGISTRATION_ROOT_KEY = "deDuperConfig";
     public static final String HBASE_COLUMN_FAMILY_NAME = "S";
     public static final String SHARD_ID_COL_NAME = "shid";
+    public static final String HBASE_TTL_COL_SUFFIX = "#ttl";
     public static final String HBASE_KEY_FORMAT = "%s|%s|%s";
     public static final String REGISTER_DEDUPER_ERROR = "Error occurred while registering deduper %s";
     public static final String DEDUPER_STATE_CHANGE_ERROR = "Error occurred while changing deduper state %s";

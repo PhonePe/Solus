@@ -56,6 +56,7 @@ public class HBaseBloomFilterUtils {
                             .forEach(entityWithBitPositions -> {
                                 for (int bitPosition : entityWithBitPositions.getBitPositions()) {
                                     get.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition));
+                                    get.addColumn(Bytes.toBytes(columnFamilyName), ttlQualifier(bitPosition));
                                 }
                             });
                     gets.add(get);
@@ -63,39 +64,48 @@ public class HBaseBloomFilterUtils {
         return gets;
     }
 
-    public Map<Long, List<Integer>> getResultMap(Result[] results, long currentTime) {
-        Map<Long, List<Integer>> resultMap = new HashMap<>();
+    public <E> Map<Long, List<Integer>> getResultMap(Result[] results,
+                                                     Map<Long, List<EntityWithBitPositions<E>>> shardGroupedEntities,
+                                                     long currentTime) {
+        final Map<Long, List<Integer>> resultMap = new HashMap<>();
         Arrays.stream(results)
                 .filter(result -> Objects.nonNull(result) && !result.isEmpty())
                 .forEach(result -> {
-                    List<Integer> list = new LinkedList<>();
                     val familyMaps = result.getNoVersionMap();
-                    familyMaps.forEach((family, familyMap) -> familyMap.forEach((qualifier, latestValue) -> {
-                        if (Constants.SHARD_ID_COL_NAME.equals(Bytes.toString(qualifier))
-                                && !resultMap.containsKey(Bytes.toLong(latestValue))) {
-                            resultMap.put(Bytes.toLong(latestValue), list);
-                        } else if (isBitSet(latestValue, currentTime)) {
-                            list.add(Bytes.toInt(qualifier));
-                        }
-                    }));
+                    familyMaps.forEach((family, familyMap)->{
+                        final long shardId = Bytes.toLong(familyMap.get(Bytes.toBytes(Constants.SHARD_ID_COL_NAME)));
+                        final List<Integer> setBits = new LinkedList<>();
+                        resultMap.put(shardId, setBits);
+                        shardGroupedEntities.getOrDefault(shardId, List.of())
+                            .forEach(entityWithBitPositions -> entityWithBitPositions.getBitPositions()
+                                .forEach(bitPosition -> {
+                                    if (isBitSet(familyMap.get(Bytes.toBytes(bitPosition)),
+                                        familyMap.get(ttlQualifier(bitPosition)), currentTime)) {
+                                        setBits.add(bitPosition);
+                                    }
+                                }));
+                    });
                 });
         return resultMap;
     }
 
     /**
-     * Checks a stored cell value during reads. Legacy cells contain a single-byte boolean
-     * marker, while current cells store the logical expiry time as a long. This dual-format
-     * handling allows backward compatibility with existing cells
+     * Qualifier holding the logical expiry timestamp for a bit, e.g. bit 0 -> "0#ttl".
      */
-    public boolean isBitSet(byte[] value, long currentTime) {
-        if (Objects.isNull(value)) {
-            return false;
+    public byte[] ttlQualifier(int bitPosition) {
+        return Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX);
+    }
+
+    /**
+     * A bit is set when its TTL cell exists and has not expired; when no TTL cell
+     * exists (legacy rows), it falls back to the boolean marker.
+     */
+    public boolean isBitSet(byte[] markerValue, byte[] expiryValue, long currentTime) {
+        if (Objects.nonNull(expiryValue)) {
+            return Bytes.toLong(expiryValue) >= currentTime;
         }
-        return switch (value.length) {
-            case Bytes.SIZEOF_BOOLEAN -> Bytes.toBoolean(value);
-            case Bytes.SIZEOF_LONG -> Bytes.toLong(value) >= currentTime;
-            default -> false;
-        };
+        // For backward compatibility: fall back to the boolean marker when no #ttl cell exists.
+        return Objects.nonNull(markerValue) && Bytes.toBoolean(markerValue);
     }
 
     public <E> List<Put> createBatchPuts(Map<Long, List<EntityWithBitPositions<E>>> map,
@@ -112,7 +122,7 @@ public class HBaseBloomFilterUtils {
                     Bytes.toBytes(key));
             value.forEach(entityWithBitPositions -> {
                 for (int bitPosition : entityWithBitPositions.getBitPositions()) {
-                    put.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition), Bytes.toBytes(expiryTime));
+                    put.addColumn(Bytes.toBytes(columnFamilyName), ttlQualifier(bitPosition), Bytes.toBytes(expiryTime));
                 }
             });
             put.setTTL(deduperTtl);

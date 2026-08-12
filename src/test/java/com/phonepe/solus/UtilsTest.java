@@ -47,12 +47,11 @@ public class UtilsTest {
     @Test
     public void testHBaseBitSetDualRead() {
         final long now = System.currentTimeMillis();
-        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(null, now));
-        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(false), now));
-        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), now));
-        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(now + 10000L), now));
-        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(now - 10000L), now));
-        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes("unknown"), now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(null, null, now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(false), null, now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), null, now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now + 10000L), now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now - 10000L), now));
     }
 
     @Test

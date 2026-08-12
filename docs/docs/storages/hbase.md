@@ -44,36 +44,36 @@ If table creation fails, a `SolusException` with `ErrorCode.TABLE_CREATION_ERROR
 
 ## How deduplication works
 
-HBase columns represent individual Bloom filter bit positions. Each bit position stores a logical `expireTime` timestamp (in ms) as the cell value. Each cell expires after the deduper-level TTL configured in `DeDuperConfig.ttlInMs`.
+HBase columns represent individual Bloom filter bit positions. Each bit position has up to two columns in the `S` family: a boolean marker at `<bitPosition>` and a TTL sibling at `<bitPosition>#ttl` carrying the logical `expireTime` timestamp (in ms). Each cell expires after the deduper-level TTL configured in `DeDuperConfig.ttlInMs`.
 
 ### Data storage
 
 1. An entity is hashed to determine its shard ID via Murmur3-128.
 2. Multiple hash functions (MD5-based) compute the bit positions within the shard.
-3. Each bit position is written as a column in the `S` column family. The column value is `now + perEntityTtl`, where `perEntityTtl` is the TTL passed to `add(...)` (defaults to `DeDuperConfig.ttlInMs` when not supplied).
-4. To check absence, all computed bit position columns are read — if any are missing or the stored `expireTime` has passed, the entity is considered absent.
+3. Each bit position is written as a TTL column in the `S` column family. The qualifier is `<bitPosition>#ttl` (e.g. bit `0` → `"0#ttl"`) and the value is `now + entity TTL`, where the entity TTL is passed to `add(...)` (defaults to `DeDuperConfig.ttlInMs` when not supplied). New writes store only the TTL column; the boolean marker is a legacy artifact.
+4. To check absence, all computed bit position columns are read — if any are missing or expired, the entity is considered absent. For each bit, the `<bitPosition>#ttl` cell takes precedence when present (`expireTime >= currentTime` means set); otherwise the legacy boolean marker at `<bitPosition>` is used.
 
 ### TTL behavior
 
 Two TTL values are in play:
 
-- **Per-entity TTL** — passed to `add(..., ttlInMs)`. If no TTL is passed, `DeDuperConfig.ttlInMs` is used. The value is limited to `DeDuperConfig.ttlInMs` and determines the logical `expireTime` stored in the cell value.
+- **Entity TTL** — passed to `add(..., ttlInMs)`. If no TTL is passed, `DeDuperConfig.ttlInMs` is used. The value is limited to `DeDuperConfig.ttlInMs` and determines the logical `expireTime` stored in the `<bitPosition>#ttl` cell.
 - **Deduper-level TTL** — `DeDuperConfig.ttlInMs`. It is set as the cell-level TTL on every `Put` and drives when each cell expires.
 
 ```java
 new Put(rowKey, System.currentTimeMillis())
     .setTTL(deduperTtl)
-    .addColumn(COLUMN_FAMILY, columnName, Bytes.toBytes(expireTime));
+    .addColumn(COLUMN_FAMILY, ttlQualifier(bitPosition), Bytes.toBytes(expireTime));
 ```
 
 After the cell expires, HBase removes it and the bit position becomes available for reuse.
 
 ### Backward compatibility
 
-Reads support two cell value formats:
+Each bit position is resolved from two columns, checked in order:
 
-- **Current format** — a `long` containing the absolute `expireTime`. The bit is considered set only if `expireTime >= currentTime`.
-- **Legacy format** — a single-byte boolean marker (`true` means set, `false`/absent means not set). This allows rolling upgrades to coexist with data written by older releases.
+- **New format (1.0.0 onwards)** — the `<bitPosition>#ttl` qualifier holding a `long` `expireTime`. The bit is considered set only if `expireTime >= currentTime`. New writes store only this column.
+- **Legacy format** — the `<bitPosition>` qualifier holding a single-byte boolean marker (`true` means set, `false`/absent means not set). Written by older releases; used only when the `#ttl` cell is absent, allowing rolling upgrades to coexist with older data.
 
 !!! note
     HBase cell TTL depends on the region server's compaction cycle. In practice, the cell becomes invisible to reads immediately after TTL expiry, but physical deletion happens during the next major compaction.
@@ -113,7 +113,8 @@ The `getAllActive` query uses a `SingleColumnValueFilter` scan on the `a` (activ
 
 | Column Family | Column | Value |
 |--------------|--------|-------|
-| `S` | `<bitPosition>` | `long` expireTime (legacy: boolean marker) |
+| `S` | `<bitPosition>#ttl` | `long` expireTime (new format, 1.0.0 onwards) |
+| `S` | `<bitPosition>` | boolean marker (legacy format, read fallback) |
 
 ### Meta table
 
