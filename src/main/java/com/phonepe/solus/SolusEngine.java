@@ -142,8 +142,6 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entity      The entity to add.
      * @param ttlInMs     The time-to-live (TTL) for the entity in milliseconds.
-     *                    If the TTL exceeds the deduper's storage expiry, the stored data
-     *                    may be physically removed before the TTL elapses.
      */
     public void add(final String deDuperName, final T entity, final long ttlInMs) {
         final DeDuper deDuper = getCachedDeDuper(deDuperName);
@@ -156,8 +154,6 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entities    A set of entities to add.
      * @param ttlInMs     The time-to-live (TTL) for the entities in milliseconds.
-     *                    If the TTL exceeds the deduper's storage expiry, the stored data
-     *                    may be physically removed before the TTL elapses.
      */
     public void add(final String deDuperName, final Set<T> entities, final long ttlInMs) {
         final DeDuper deDuper = getCachedDeDuper(deDuperName);
@@ -170,8 +166,6 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entity      The entity to add if absent.
      * @param ttlInMs     The time-to-live (TTL) for the entity in milliseconds.
-     *                    If the TTL exceeds the deduper's storage expiry, the stored data
-     *                    may be physically removed before the TTL elapses.
      * @return True if the entity was added, false if it was already present.
      */
     public boolean addIfAbsent(final String deDuperName, final T entity, final long ttlInMs) {
@@ -185,8 +179,6 @@ public class SolusEngine<T> {
      * @param deDuperName The name of the DeDuper to use.
      * @param entities    A set of entities to add if absent.
      * @param ttlInMs     The time-to-live (TTL) for the entities in milliseconds.
-     *                    If the TTL exceeds the deduper's storage expiry, the stored data
-     *                    may be physically removed before the TTL elapses.
      * @return A map of entities to their addition status (true if added, false if already present).
      */
     public Map<T, Boolean> addIfAbsent(final String deDuperName, final Set<T> entities, final long ttlInMs) {
