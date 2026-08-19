@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import lombok.experimental.UtilityClass;
 import lombok.val;
@@ -56,7 +57,7 @@ public class HBaseBloomFilterUtils {
                             .forEach(entityWithBitPositions -> {
                                 for (int bitPosition : entityWithBitPositions.getBitPositions()) {
                                     get.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition));
-                                    get.addColumn(Bytes.toBytes(columnFamilyName), ttlQualifier(bitPosition));
+                                    get.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX));
                                 }
                             });
                     gets.add(get);
@@ -64,8 +65,8 @@ public class HBaseBloomFilterUtils {
         return gets;
     }
 
-    public <E> Map<Long, List<Integer>> getResultMap(Result[] results,
-                                                     Map<Long, List<EntityWithBitPositions<E>>> shardGroupedEntities,
+    public <E> Map<Long, List<Integer>> getResultMap(final Result[] results,
+                                                     final Map<Long, List<EntityWithBitPositions<E>>> shardGroupedEntities,
                                                      long currentTime) {
         final Map<Long, List<Integer>> resultMap = new HashMap<>();
         Arrays.stream(results)
@@ -80,7 +81,7 @@ public class HBaseBloomFilterUtils {
                             .forEach(entityWithBitPositions -> entityWithBitPositions.getBitPositions()
                                 .forEach(bitPosition -> {
                                     if (isBitSet(familyMap.get(Bytes.toBytes(bitPosition)),
-                                        familyMap.get(ttlQualifier(bitPosition)), currentTime)) {
+                                        familyMap.get(Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX)), currentTime)) {
                                         setBits.add(bitPosition);
                                     }
                                 }));
@@ -89,12 +90,6 @@ public class HBaseBloomFilterUtils {
         return resultMap;
     }
 
-    /**
-     * Qualifier holding the logical expiry timestamp for a bit, e.g. bit 0 -> "0#ttl".
-     */
-    public byte[] ttlQualifier(int bitPosition) {
-        return Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX);
-    }
 
     /**
      * A bit is set when its TTL cell exists and has not expired; when no TTL cell
@@ -113,7 +108,7 @@ public class HBaseBloomFilterUtils {
                                          String columnFamilyName,
                                          String clientId,
                                          String deDuperName,
-                                         Long deduperTtl) {
+                                         int deduperExpiry) {
         final Long expiryTime = new Date().getTime() + ttl;
         List<Put> puts = new LinkedList<>();
         map.forEach((key, value) -> {
@@ -122,10 +117,11 @@ public class HBaseBloomFilterUtils {
                     Bytes.toBytes(key));
             value.forEach(entityWithBitPositions -> {
                 for (int bitPosition : entityWithBitPositions.getBitPositions()) {
-                    put.addColumn(Bytes.toBytes(columnFamilyName), ttlQualifier(bitPosition), Bytes.toBytes(expiryTime));
+                    put.addColumn(Bytes.toBytes(columnFamilyName), Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX), Bytes.toBytes(expiryTime));
                 }
             });
-            put.setTTL(deduperTtl);
+            // HBase setTTL expects milliseconds
+            put.setTTL(TimeUnit.SECONDS.toMillis(deduperExpiry));
             puts.add(put);
         });
         return puts;

@@ -16,16 +16,16 @@
 
 package com.phonepe.solus.store.aerospike;
 
+import com.aerospike.client.BatchRead;
+import com.aerospike.client.BatchRecord;
+import com.aerospike.client.BatchWrite;
 import com.aerospike.client.Bin;
 import com.aerospike.client.IAerospikeClient;
 import com.aerospike.client.Key;
-import com.aerospike.client.Value;
-import com.aerospike.client.Record;
-import com.aerospike.client.BatchRecord;
-import com.aerospike.client.BatchRead;
-import com.aerospike.client.BatchWrite;
-import com.aerospike.client.ResultCode;
 import com.aerospike.client.Operation;
+import com.aerospike.client.Record;
+import com.aerospike.client.ResultCode;
+import com.aerospike.client.Value;
 import com.aerospike.client.policy.BatchWritePolicy;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
@@ -38,17 +38,16 @@ import com.phonepe.solus.filter.impl.EntityWithBitPositions;
 import com.phonepe.solus.store.IDeDuperDataStore;
 import com.phonepe.solus.util.AerospikeUtils;
 import com.phonepe.solus.util.ErrorMessages;
-import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.Date;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * The latest binName structure is shortened by eliminating few useless characters in the
@@ -82,14 +81,14 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
                        final long ttl,
-                       final long deduperTtl) {
+                       final int deduperExpiry) {
         try {
             final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
             writePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-            // Per-entity TTL determines the logical expiryTime stored in each bin; deduperTtl is
+            // Per-entity TTL determines the logical expiryTime stored in each bin; deduperExpiry is
             // converted to seconds and applied at the storage level so the record expires after
             // the configured deduper TTL.
-            writePolicy.expiration = AerospikeUtils.toTtlSeconds(deduperTtl);
+            writePolicy.expiration = deduperExpiry;
             writePolicy.sendKey = true;
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
@@ -115,12 +114,12 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
                             final long ttl,
-                            final long deduperTtl) {
+                            final int deduperExpiry) {
 
         try {
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
-            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, AerospikeUtils.toTtlSeconds(deduperTtl));
+            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, deduperExpiry);
             AerospikeUtils.retryer.call(() ->
                     aerospikeClient.operate(aerospikeClient.getBatchPolicyDefault(), batchWrites));
         } catch (ExecutionException e) {
@@ -260,7 +259,7 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                                                final int ttlSeconds) {
         final BatchWritePolicy batchWritePolicy = new BatchWritePolicy(aerospikeClient.getBatchWritePolicyDefault());
         batchWritePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-        // deduperTtl (already converted to seconds) drives the storage-level record expiration.
+        // deduperExpiry (already converted to seconds) drives the storage-level record expiration.
         batchWritePolicy.expiration = ttlSeconds;
         batchWritePolicy.sendKey = true;
         return shardGroupedEntities.entrySet()

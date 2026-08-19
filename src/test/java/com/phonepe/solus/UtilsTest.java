@@ -54,13 +54,5 @@ public class UtilsTest {
         Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now - 10000L), now));
     }
 
-    @Test
-    public void testAerospikeToTtlSeconds() {
-        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1L));
-        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(999L));
-        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1000L));
-        Assert.assertEquals(1, AerospikeUtils.toTtlSeconds(1500L));
-        Assert.assertEquals(60, AerospikeUtils.toTtlSeconds(60000L));
-    }
 
 }

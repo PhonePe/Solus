@@ -31,6 +31,7 @@ import com.phonepe.solus.store.IDeDuperDataStore;
 import com.phonepe.solus.util.Constants;
 import com.phonepe.solus.util.ErrorMessages;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -59,7 +60,7 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
                        final long ttl,
-                       final long deduperTtl) {
+                       final int deduperExpiry) {
         final Put put = new Put(HBaseBloomFilterUtils.rowKeyWithPrefix(
                 Bytes.toBytes(HBaseBloomFilterUtils.getRowKey(shardId, clientId, deDuperName))));
         final Long expiryTime = new Date().getTime() + ttl;
@@ -68,11 +69,12 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
         entityWithBitPositions.getBitPositions()
                 .forEach(bitPosition -> put.addColumn(
                         Bytes.toBytes(Constants.HBASE_COLUMN_FAMILY_NAME),
-                        HBaseBloomFilterUtils.ttlQualifier(bitPosition),
+                        Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX),
                         Bytes.toBytes(expiryTime)));
-        // Per-entity TTL determines the logical expiryTime stored in each cell; deduperTtl is
+        // Per-entity TTL determines the logical expiryTime stored in each cell; deduperExpiry is
         // applied at the storage level so each cell expires after the configured deduper TTL.
-        put.setTTL(deduperTtl);
+        // HBase setTTL expects milliseconds
+        put.setTTL(TimeUnit.SECONDS.toMillis(deduperExpiry));
         try {
             HBasePutCommand.builder()
                     .hBaseConnection(connection)
@@ -91,13 +93,13 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
                             final long ttl,
-                            final long deduperTtl) {
+                            final int deduperExpiry) {
         try {
             HBaseBatchPutCommand.builder()
                     .connection(connection)
                     .table(getTableName(level))
                     .puts(HBaseBloomFilterUtils.createBatchPuts(shardGroupedEntities, ttl,
-                            Constants.HBASE_COLUMN_FAMILY_NAME, clientId, deDuperName, deduperTtl))
+                            Constants.HBASE_COLUMN_FAMILY_NAME, clientId, deDuperName, deduperExpiry))
                     .build()
                     .execute();
         } catch (IOException e) {
@@ -116,7 +118,7 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                 .stream()
                 .flatMap(bitPosition -> Stream.of(
                         new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition)),
-                        new HBaseGetCommand.ColumnInfo(columnFamily, HBaseBloomFilterUtils.ttlQualifier(bitPosition))
+                        new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX))
                 ))
                 .collect(Collectors.toList());
         try {
@@ -133,7 +135,7 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                     .stream()
                     .filter(bitPosition -> HBaseBloomFilterUtils.isBitSet(
                             columnInfoMap.get(new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition))),
-                            columnInfoMap.get(new HBaseGetCommand.ColumnInfo(columnFamily, HBaseBloomFilterUtils.ttlQualifier(bitPosition))),
+                            columnInfoMap.get(new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX))),
                             currentTime))
                     .count();
         } catch (IOException e) {

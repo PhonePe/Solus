@@ -16,11 +16,11 @@
 
 package com.phonepe.solus.store.aerospike;
 
-import com.aerospike.client.Record;
-import com.aerospike.client.Key;
-import com.aerospike.client.Bin;
 import com.aerospike.client.AerospikeException;
+import com.aerospike.client.Bin;
 import com.aerospike.client.IAerospikeClient;
+import com.aerospike.client.Key;
+import com.aerospike.client.Record;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.client.query.IndexType;
@@ -37,16 +37,15 @@ import com.phonepe.solus.store.IDeDuperMetaStore;
 import com.phonepe.solus.util.AerospikeUtils;
 import com.phonepe.solus.util.Constants;
 import com.phonepe.solus.util.ErrorMessages;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
@@ -59,7 +58,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
     private static final String BITS_PER_SHARD_BIN = "bps";
     private static final String ACTIVE_BIN = "active";
     private static final String LEVEL_BIN = "level";
-    private static final String TTL_IN_MS_BIN = "ttl";
+    private static final String EXPIRY_IN_SECONDS_BIN = "exp";
     private static final int AS_FOREVER_EXPIRATION_TTL = -1;
     private static final String ACTIVE_BIN_INDEX_FORMAT = "%s_%s";
     private static final String FARM_BIN = "farm";
@@ -212,8 +211,8 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
                             .deDuperLevel(Objects.nonNull(level)
                                     ? DeDuperLevel.valueOf(level)
                                     : DeDuperLevel.XDC)
-                            .ttlInMs((Long) AerospikeUtils.getFarmSpecificBinValue(
-                                    asRecord, TTL_IN_MS_BIN, latestUpdateFarmForThisRecord))
+                            .expiryInSeconds((int) AerospikeUtils.getFarmSpecificBinValue(
+                                    asRecord, EXPIRY_IN_SECONDS_BIN, latestUpdateFarmForThisRecord))
                             .build())
                     .clientId(clientId)
                     .farms(storedFarms)
@@ -250,7 +249,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
                     new Bin(AerospikeUtils.getBin(BITS_PER_SHARD_BIN, farm), deDuperConfig.getBitsPerShard()),
                     new Bin(AerospikeUtils.getBin(ACTIVE_BIN, farm), status),
                     new Bin(AerospikeUtils.getBin(LEVEL_BIN, farm), deDuperConfig.getDeDuperLevel()),
-                    new Bin(AerospikeUtils.getBin(TTL_IN_MS_BIN, farm), deDuperConfig.getTtlInMs()),
+                    new Bin(AerospikeUtils.getBin(EXPIRY_IN_SECONDS_BIN, farm), deDuperConfig.getExpiryInSeconds()),
                     new Bin(AerospikeUtils.getBin(UPDATED_BIN, farm), System.currentTimeMillis()),
                     new Bin(AerospikeUtils.getBin(FARM_BIN, farm), true)
             );

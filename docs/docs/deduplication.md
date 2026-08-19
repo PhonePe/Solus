@@ -7,10 +7,10 @@ Each deduper is created with a `DeDuperConfig` that controls the Bloom filter pa
 | Parameter | Type | Default | Min | Max | Description |
 |-----------|------|---------|-----|-----|-------------|
 | `noOfHashFunctions` | `int` | 7 | 7 | 13 | Number of hash functions for the Bloom filter. More functions reduce false positives but increase write cost. |
-| `noOfShards` | `long` | 10,000,000 | 1,000,000 | 150,000,000 | Number of shards for distributing data. Each entity is assigned to one shard via Murmur3 hashing. The default is intentionally kept at 10,000,000 for backward compatibility. |
+| `noOfShards` | `long` | 1,000,000 | 1,000,000 | 150,000,000 | Number of shards for distributing data. Each entity is assigned to one shard via Murmur3 hashing. |
 | `bitsPerShard` | `int` | 1,000 | 1,000 | 30,000 | Number of bit positions in each shard's Bloom filter. |
 | `deDuperLevel` | `DeDuperLevel` | `XDC` | — | — | `DC` (datacenter-local) or `XDC` (cross-datacenter). |
-| `ttlInMs` | `Long` | 1,000,000,000 | — | — | Deduper-level TTL in ms. Limits per-entity TTLs and defaults the no-TTL overloads of `add`/`addIfAbsent`. |
+| `expiryInSeconds` | `int` | 864,000 (10 days) | — | — | Time-to-live in seconds applied to the stored entity. |
 
 ```java
 DeDuperConfig config = DeDuperConfig.builder()
@@ -144,29 +144,25 @@ k_opt = (m / n) × ln(2)
 
 | Method | Description |
 |--------|-------------|
-| `add(String deDuperName, T entity, long ttlInMs)` | Adds the entity to the Bloom filter. The supplied TTL is limited to `DeDuperConfig.ttlInMs`. |
-| `add(String deDuperName, T entity)` | Adds the entity to the Bloom filter using `DeDuperConfig.ttlInMs`. |
+| `add(String deDuperName, T entity, long ttlInMs)` | Adds the entity to the Bloom filter. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. |
 
 ### `add` — batch
 
 | Method | Description |
 |--------|-------------|
-| `add(String deDuperName, Set<T> entities, long ttlInMs)` | Adds all entities to the Bloom filter. The supplied TTL is limited to `DeDuperConfig.ttlInMs`. Entities are grouped by shard for efficient batch writes. |
-| `add(String deDuperName, Set<T> entities)` | Adds all entities to the Bloom filter using `DeDuperConfig.ttlInMs`. Entities are grouped by shard for efficient batch writes. |
+| `add(String deDuperName, Set<T> entities, long ttlInMs)` | Adds all entities to the Bloom filter. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. Entities are grouped by shard for efficient batch writes. |
 
 ### `addIfAbsent` — single entity
 
 | Method | Description |
 |--------|-------------|
-| `addIfAbsent(String deDuperName, T entity, long ttlInMs)` | Checks if the entity is absent, and if so, adds it. The supplied TTL is limited to `DeDuperConfig.ttlInMs`. Returns `true` if the entity was added. |
-| `addIfAbsent(String deDuperName, T entity)` | Checks if the entity is absent, and if so, adds it using `DeDuperConfig.ttlInMs`. Returns `true` if the entity was added. |
+| `addIfAbsent(String deDuperName, T entity, long ttlInMs)` | Checks if the entity is absent, and if so, adds it. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. Returns `true` if the entity was added. |
 
 ### `addIfAbsent` — batch
 
 | Method | Description |
 |--------|-------------|
-| `addIfAbsent(String deDuperName, Set<T> entities, long ttlInMs)` | Returns a `Map<T, Boolean>` — `true` for entities that were added (were absent). The supplied TTL is limited to `DeDuperConfig.ttlInMs`. |
-| `addIfAbsent(String deDuperName, Set<T> entities)` | Returns a `Map<T, Boolean>` — `true` for entities that were added (were absent) using `DeDuperConfig.ttlInMs`. |
+| `addIfAbsent(String deDuperName, Set<T> entities, long ttlInMs)` | Returns a `Map<T, Boolean>` — `true` for entities that were added (were absent). Values larger than the deduper's storage expiry are effectively truncated by the storage layer. |
 
 ### Registration methods
 

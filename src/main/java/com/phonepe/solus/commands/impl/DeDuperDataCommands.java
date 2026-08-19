@@ -64,7 +64,7 @@ public class DeDuperDataCommands<T> implements IDeDuperDataCommands<T> {
                 deDuper.getDeDuperConfig().getNoOfHashFunctions(), deDuper.getDeDuperConfig().getBitsPerShard());
         deDuperDataStore.update(
                 deDuper.getName(), shardId, deDuper.getDeDuperConfig().getDeDuperLevel(), entityWithBitPositions,
-                Math.min(ttl, deDuper.getDeDuperConfig().getTtlInMs()), deDuper.getDeDuperConfig().getTtlInMs());
+                ttl, deDuper.getDeDuperConfig().getExpiryInSeconds());
     }
 
     @Override
@@ -72,7 +72,7 @@ public class DeDuperDataCommands<T> implements IDeDuperDataCommands<T> {
         final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities = groupEntitiesOnShard(deDuper, entities);
         deDuperDataStore.batchUpdate(
                 deDuper.getName(), deDuper.getDeDuperConfig().getDeDuperLevel(), shardGroupedEntities,
-                Math.min(ttl, deDuper.getDeDuperConfig().getTtlInMs()), deDuper.getDeDuperConfig().getTtlInMs());
+                ttl, deDuper.getDeDuperConfig().getExpiryInSeconds());
     }
 
     @Override
