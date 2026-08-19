@@ -18,7 +18,6 @@ package com.phonepe.solus;
 
 import com.phonepe.solus.filter.impl.hbase.HBaseBloomFilterUtils;
 import com.phonepe.solus.shard.ShardCalculator;
-import com.phonepe.solus.util.AerospikeUtils;
 import com.phonepe.solus.util.SizeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -53,6 +52,4 @@ public class UtilsTest {
         Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now + 10000L), now));
         Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now - 10000L), now));
     }
-
-
 }

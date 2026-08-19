@@ -72,7 +72,7 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                         Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX),
                         Bytes.toBytes(expiryTime)));
         // Per-entity TTL determines the logical expiryTime stored in each cell; deduperExpiry is
-        // applied at the storage level so each cell expires after the configured deduper TTL.
+        // applied at the storage level so each cell expires after the configured storage expiry.
         // HBase setTTL expects milliseconds
         put.setTTL(TimeUnit.SECONDS.toMillis(deduperExpiry));
         try {

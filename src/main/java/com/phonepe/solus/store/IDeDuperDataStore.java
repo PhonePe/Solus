@@ -32,7 +32,7 @@ public interface IDeDuperDataStore<T> {
      * @param shardId                shard identifier computed for the entity
      * @param level                  configured deduper level
      * @param entityWithBitPositions entity and resolved bit positions
-     * @param ttl                    effective per-entity ttl in ms (already defaulted/limited by caller);
+     * @param ttl                    per-entity ttl in ms;
      *                               each stored bit is tagged with {@code now + ttl} as its logical expiry time
      * @param deduperExpiry          deduperExpiry defines storage-level expiration in seconds
      */
@@ -44,7 +44,7 @@ public interface IDeDuperDataStore<T> {
      * @param deDuperName          name of the deduper
      * @param level                configured deduper level
      * @param shardGroupedEntities entities grouped by shard id
-     * @param ttl                  effective per-entity ttl in ms (already defaulted/limited by caller);
+     * @param ttl                  per-entity ttl in ms;
      *                             each stored bit is tagged with {@code now + ttl} as its logical expiry time
      * @param deduperExpiry        deduperExpiry defines storage-level expiration in seconds
      */

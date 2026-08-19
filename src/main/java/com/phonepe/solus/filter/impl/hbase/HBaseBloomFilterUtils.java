@@ -73,7 +73,7 @@ public class HBaseBloomFilterUtils {
                 .filter(result -> Objects.nonNull(result) && !result.isEmpty())
                 .forEach(result -> {
                     val familyMaps = result.getNoVersionMap();
-                    familyMaps.forEach((family, familyMap)->{
+                    familyMaps.forEach((family, familyMap) -> {
                         final long shardId = Bytes.toLong(familyMap.get(Bytes.toBytes(Constants.SHARD_ID_COL_NAME)));
                         final List<Integer> setBits = new LinkedList<>();
                         resultMap.put(shardId, setBits);
@@ -89,7 +89,6 @@ public class HBaseBloomFilterUtils {
                 });
         return resultMap;
     }
-
 
     /**
      * A bit is set when its TTL cell exists and has not expired; when no TTL cell

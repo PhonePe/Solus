@@ -88,6 +88,4 @@ public class HBaseSolusTest {
             System.out.println("Successfully created table locally: " + tableName);
         }
     }
-
-
 }

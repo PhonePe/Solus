@@ -116,7 +116,6 @@ public class AerospikeDeDuperTest {
         }
     }
 
-
     @Test
     public void testAddEntityInDCLevelDeDuper() {
         solusEngine.register("couponsV2", DeDuperConfig.builder()

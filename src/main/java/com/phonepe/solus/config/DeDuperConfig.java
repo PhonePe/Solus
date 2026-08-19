@@ -17,11 +17,12 @@
 package com.phonepe.solus.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @Data
 @Builder
@@ -56,7 +57,7 @@ public class DeDuperConfig {
      * Time-to-live in seconds applied to the stored entity at the storage layer.
      */
     @Builder.Default
-    private int expiryInSeconds =  10 * 86400; // 10 days
+    private int expiryInSeconds = 10 * 86400; // 10 days
 
     @JsonIgnore
     public boolean isEqual(final DeDuperConfig deDuperConfig) {

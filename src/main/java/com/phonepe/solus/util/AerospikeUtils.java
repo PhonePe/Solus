@@ -47,7 +47,6 @@ public class AerospikeUtils {
             .withBlockStrategy(BlockStrategies.threadSleepStrategy())
             .build();
 
-
     public Object getFarmSpecificBinValue(final Record asRecord, final String binSuffix, final String farm) {
         return asRecord.bins.getOrDefault(BIN_FORMAT.formatted(farm, binSuffix), asRecord.bins.get(binSuffix));
     }
