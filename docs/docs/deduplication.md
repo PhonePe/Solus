@@ -21,6 +21,10 @@ DeDuperConfig config = DeDuperConfig.builder()
     .build();
 ```
 
+### TTL
+
+Every entity is stored with the TTL (in milliseconds) passed to `add(...)`. Once this TTL elapses, the entity's bits are treated as expired and the entity is reported as absent — the stored data itself is not deleted at that point. Physical removal is governed by `expiryInSeconds`: the storage backend automatically deletes the stored data once this duration elapses.
+
 !!! warning "Immutable after registration"
     
     Once a deduper is registered, its configuration cannot be changed. Attempting to re-register with a different config throws `SolusException` with `ErrorCode.DEDUPER_CONFIG_MISMATCH`.
@@ -144,25 +148,25 @@ k_opt = (m / n) × ln(2)
 
 | Method | Description |
 |--------|-------------|
-| `add(String deDuperName, T entity, long ttlInMs)` | Adds the entity to the Bloom filter. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. |
+| `add(String deDuperName, T entity, long ttlInMs)` | Adds the entity to the Bloom filter with the specified TTL in milliseconds. |
 
 ### `add` — batch
 
 | Method | Description |
 |--------|-------------|
-| `add(String deDuperName, Set<T> entities, long ttlInMs)` | Adds all entities to the Bloom filter. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. Entities are grouped by shard for efficient batch writes. |
+| `add(String deDuperName, Set<T> entities, long ttlInMs)` | Adds all entities to the Bloom filter. Entities are grouped by shard for efficient batch writes. |
 
 ### `addIfAbsent` — single entity
 
 | Method | Description |
 |--------|-------------|
-| `addIfAbsent(String deDuperName, T entity, long ttlInMs)` | Checks if the entity is absent, and if so, adds it. Values larger than the deduper's storage expiry are effectively truncated by the storage layer. Returns `true` if the entity was added. |
+| `addIfAbsent(String deDuperName, T entity, long ttlInMs)` | Checks if the entity is absent, and if so, adds it. Returns `true` if the entity was added. |
 
 ### `addIfAbsent` — batch
 
 | Method | Description |
 |--------|-------------|
-| `addIfAbsent(String deDuperName, Set<T> entities, long ttlInMs)` | Returns a `Map<T, Boolean>` — `true` for entities that were added (were absent). Values larger than the deduper's storage expiry are effectively truncated by the storage layer. |
+| `addIfAbsent(String deDuperName, Set<T> entities, long ttlInMs)` | Returns a `Map<T, Boolean>` — `true` for entities that were added (were absent). |
 
 ### Registration methods
 

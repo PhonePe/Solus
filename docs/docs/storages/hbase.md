@@ -44,20 +44,20 @@ If table creation fails, a `SolusException` with `ErrorCode.TABLE_CREATION_ERROR
 
 ## How deduplication works
 
-HBase columns represent individual Bloom filter bit positions. Each bit position has up to two columns in the `S` family: a boolean marker at `<bitPosition>` and a TTL sibling at `<bitPosition>#ttl` carrying the logical `expireTime` timestamp (in ms). Each cell expires after the storage-level expiry configured in `DeDuperConfig.expiryInSeconds`.
+HBase columns represent individual Bloom filter bit positions. Each bit position is stored as a column at `<bitPosition>#ttl` in the `S` family, carrying the logical `expireTime` timestamp (in ms) — `now + entity TTL`. Each cell expires after the storage-level expiry configured in `DeDuperConfig.expiryInSeconds`.
 
 ### Data storage
 
 1. An entity is hashed to determine its shard ID via Murmur3-128.
 2. Multiple hash functions (MD5-based) compute the bit positions within the shard.
-3. Each bit position is written as a TTL column in the `S` column family. The qualifier is `<bitPosition>#ttl` (e.g. bit `0` → `"0#ttl"`) and the value is `now + entity TTL`, where the entity TTL is passed to `add(...)`. New writes store only the TTL column; the boolean marker is a legacy artifact.
+3. Each bit position is written as a TTL column in the `S` column family. The qualifier is `<bitPosition>#ttl` (e.g. bit `0` → `"0#ttl"`) and the value is `now + entity TTL`, where the entity TTL is passed tby the client.
 4. To check absence, all computed bit position columns are read — if any are missing or expired, the entity is considered absent. For each bit, the `<bitPosition>#ttl` cell takes precedence when present (`expireTime >= currentTime` means set); otherwise the legacy boolean marker at `<bitPosition>` is used.
 
 ### TTL behavior
 
 Two TTL values are in play:
 
-- **Entity TTL** — passed to `add(..., ttlInMs)`. It determines the logical `expireTime` stored in the `<bitPosition>#ttl` cell. Values larger than the deduper's storage expiry are effectively truncated by the storage layer.
+- **Entity TTL** — passed by the client. It determines the logical `expireTime` stored in the `<bitPosition>#ttl` cell.
 - **Storage expiry** — `DeDuperConfig.expiryInSeconds`. It is set as the cell-level TTL on every `Put` and drives when each cell is physically expired.
 
 ```java
@@ -67,7 +67,7 @@ new Put(rowKey, System.currentTimeMillis())
     .addColumn(COLUMN_FAMILY, Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX), Bytes.toBytes(expireTime));
 ```
 
-After the cell expires, HBase removes it and the bit position becomes available for reuse.
+After the TTL expires, HBase automatically removes the cell, making the bit position available for reuse.
 
 ### Backward compatibility
 

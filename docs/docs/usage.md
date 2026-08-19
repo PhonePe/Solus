@@ -118,8 +118,8 @@ See [False Positive Rates](deduplication.md#false-positive-rates) for details.
 
 ### Add entities
 
-Adds an entity to the deduper with a TTL. After the TTL expires, the entity is automatically removed by the storage
-backend. Values larger than the deduper's storage expiry are effectively truncated by the storage layer.
+Adds an entity to the deduper with a TTL in milliseconds. Once the TTL elapses, the entity is treated as absent and
+can be added again. The storage backend physically removes stored data after `DeDuperConfig.expiryInSeconds`.
 
 ```java
 // Single entity — TTL in milliseconds
@@ -133,7 +133,6 @@ solusEngine.add("coupons", entities, 86400000L);
 ### Atomic add-if-absent
 
 Checks if the entity is absent, and if so, adds it atomically. Returns `true` if the entity was added (was absent).
-Values larger than the deduper's storage expiry are effectively truncated by the storage layer.
 
 ```java
 // Single entity
