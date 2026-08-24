@@ -16,6 +16,8 @@
 
 package com.phonepe.solus.store.hbase;
 
+import static com.phonepe.solus.config.DeDuperConfig.DEFAULT_EXPIRY_SECONDS;
+
 import com.phonepe.solus.DeDuper;
 import com.phonepe.solus.config.DeDuperConfig;
 import com.phonepe.solus.config.DeDuperLevel;
@@ -211,6 +213,12 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                             Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
                             Bytes.toBytes(LEVEL_COL))
             );
+
+            final byte[] expiryInSeconds = columnInfoMap.get(
+                     new HBaseGetCommand.ColumnInfo(
+                           Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
+                           Bytes.toBytes(EXPIRY_IN_SECONDS_COL))
+            );
             return Optional.of(
                     DeDuper.builder()
                             .name(Bytes.toString(columnInfoMap.get(
@@ -238,11 +246,10 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                                             ? DeDuperLevel.valueOf(Bytes.toString(level))
                                             : DeDuperLevel.XDC
                                     )
-                                    .expiryInSeconds(Bytes.toInt(columnInfoMap.get(
-                                            new HBaseGetCommand.ColumnInfo(
-                                                    Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
-                                                    Bytes.toBytes(EXPIRY_IN_SECONDS_COL))
-                                    )))
+                                    .expiryInSeconds(Objects.nonNull(expiryInSeconds)
+                                            ? Bytes.toInt(expiryInSeconds)
+                                            : DEFAULT_EXPIRY_SECONDS
+                                    )
                                     .build())
                             .clientId(clientId)
                             .build());

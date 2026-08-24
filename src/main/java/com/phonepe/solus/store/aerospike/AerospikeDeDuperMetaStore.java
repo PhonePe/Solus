@@ -16,6 +16,8 @@
 
 package com.phonepe.solus.store.aerospike;
 
+import static com.phonepe.solus.config.DeDuperConfig.DEFAULT_EXPIRY_SECONDS;
+
 import com.aerospike.client.Record;
 import com.aerospike.client.Key;
 import com.aerospike.client.Bin;
@@ -200,6 +202,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
             }
 
             final String level = (String) AerospikeUtils.getFarmSpecificBinValue(asRecord, LEVEL_BIN, latestUpdateFarmForThisRecord);
+            final Number expiryInSeconds = (Number) AerospikeUtils.getFarmSpecificBinValue(asRecord, EXPIRY_IN_SECONDS_BIN, latestUpdateFarmForThisRecord);
             return Optional.of(DeDuper.builder()
                     .name((String) AerospikeUtils.getFarmSpecificBinValue(asRecord, NAME_BIN, latestUpdateFarmForThisRecord))
                     .deDuperConfig(DeDuperConfig.builder()
@@ -212,8 +215,9 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
                             .deDuperLevel(Objects.nonNull(level)
                                     ? DeDuperLevel.valueOf(level)
                                     : DeDuperLevel.XDC)
-                            .expiryInSeconds((int) AerospikeUtils.getFarmSpecificBinValue(
-                                    asRecord, EXPIRY_IN_SECONDS_BIN, latestUpdateFarmForThisRecord))
+                            .expiryInSeconds(Objects.nonNull(expiryInSeconds)
+                                    ? expiryInSeconds.intValue()
+                                    : DEFAULT_EXPIRY_SECONDS)
                             .build())
                     .clientId(clientId)
                     .farms(storedFarms)
