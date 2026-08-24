@@ -67,7 +67,7 @@ public class HBaseBloomFilterUtils {
 
     public <E> Map<Long, List<Integer>> getResultMap(final Result[] results,
                                                      final Map<Long, List<EntityWithBitPositions<E>>> shardGroupedEntities,
-                                                     long currentTime) {
+                                                     final long currentTime) {
         final Map<Long, List<Integer>> resultMap = new HashMap<>();
         Arrays.stream(results)
                 .filter(result -> Objects.nonNull(result) && !result.isEmpty())

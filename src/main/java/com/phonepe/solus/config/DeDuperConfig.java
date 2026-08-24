@@ -38,6 +38,7 @@ public class DeDuperConfig {
     public static final long MAX_NUMBER_OF_SHARDS = 150000000;
     public static final int MIN_BITS_PER_SHARD = 1000;
     public static final int MAX_BITS_PER_SHARD = 30000;
+    public static final int DEFAULT_EXPIRY_SECONDS = 30000; // 10 days
 
     @Min(MIN_NUMBER_OF_HASH_FUNCTION)
     @Max(MAX_NUMBER_OF_HASH_FUNCTION)
@@ -57,7 +58,7 @@ public class DeDuperConfig {
      * Time-to-live in seconds applied to the stored entity at the storage layer.
      */
     @Builder.Default
-    private int expiryInSeconds = 10 * 86400; // 10 days
+    private int expiryInSeconds = DEFAULT_EXPIRY_SECONDS;
 
     @JsonIgnore
     public boolean isEqual(final DeDuperConfig deDuperConfig) {
