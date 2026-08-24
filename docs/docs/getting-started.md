@@ -73,7 +73,7 @@ boolean wasAdded = solusEngine.addIfAbsent("coupons", "COUPON-XYZ-789", 86400000
 
 !!! tip
 
-    The example above uses all default configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level).
+    The example above uses the configuration values (7 hash functions, 10M shards, 1000 bits per shard, XDC level).
     To customise these, pass a `DeDuperConfig` to the `register()` call.
 See [Deduplication Semantics](deduplication.md#configuration) for details.
 

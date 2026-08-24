@@ -16,6 +16,8 @@
 
 package com.phonepe.solus.store.hbase;
 
+import static com.phonepe.solus.config.DeDuperConfig.DEFAULT_EXPIRY_SECONDS;
+
 import com.phonepe.solus.DeDuper;
 import com.phonepe.solus.config.DeDuperConfig;
 import com.phonepe.solus.config.DeDuperLevel;
@@ -59,6 +61,7 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
     private static final String BITS_PER_SHAR_COL = "bps";
     private static final String ACTIVE_COL = "a";
     private static final String LEVEL_COL = "level";
+    private static final String EXPIRY_IN_SECONDS_COL = "exp";
     private final String clientId;
     private final HBaseTableConnection connection;
 
@@ -88,6 +91,8 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                 Bytes.toBytes(true));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(LEVEL_COL),
                 Bytes.toBytes(deDuperConfig.getDeDuperLevel().getValue()));
+        put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(EXPIRY_IN_SECONDS_COL),
+                Bytes.toBytes(deDuperConfig.getExpiryInSeconds()));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(CREATED_TIME_COL),
                 Bytes.toBytes(System.currentTimeMillis()));
         put.addColumn(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME), Bytes.toBytes(UPDATED_TIME_COL),
@@ -184,7 +189,9 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                 new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
                         Bytes.toBytes(ACTIVE_COL)),
                 new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
-                        Bytes.toBytes(LEVEL_COL)));
+                        Bytes.toBytes(LEVEL_COL)),
+                new HBaseGetCommand.ColumnInfo(Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
+                        Bytes.toBytes(EXPIRY_IN_SECONDS_COL)));
         try {
             final Map<HBaseGetCommand.ColumnInfo, byte[]> columnInfoMap = HBaseGetCommand.builder()
                     .hBaseConnection(connection)
@@ -205,6 +212,12 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                     new HBaseGetCommand.ColumnInfo(
                             Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
                             Bytes.toBytes(LEVEL_COL))
+            );
+
+            final byte[] expiryInSeconds = columnInfoMap.get(
+                     new HBaseGetCommand.ColumnInfo(
+                           Bytes.toBytes(HBASE_REGISTRATION_COLUMN_FAMILY_NAME),
+                           Bytes.toBytes(EXPIRY_IN_SECONDS_COL))
             );
             return Optional.of(
                     DeDuper.builder()
@@ -232,6 +245,10 @@ public class HBaseDeDuperMetaStore implements IDeDuperMetaStore {
                                     .deDuperLevel(Objects.nonNull(level)
                                             ? DeDuperLevel.valueOf(Bytes.toString(level))
                                             : DeDuperLevel.XDC
+                                    )
+                                    .expiryInSeconds(Objects.nonNull(expiryInSeconds)
+                                            ? Bytes.toInt(expiryInSeconds)
+                                            : DEFAULT_EXPIRY_SECONDS
                                     )
                                     .build())
                             .clientId(clientId)

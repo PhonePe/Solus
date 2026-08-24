@@ -30,6 +30,9 @@ import com.phonepe.solus.hbase.commands.HBasePutCommand;
 import com.phonepe.solus.store.IDeDuperDataStore;
 import com.phonepe.solus.util.Constants;
 import com.phonepe.solus.util.ErrorMessages;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hbase.client.Put;
@@ -56,18 +59,22 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final long shardId,
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
-                       final long ttl) {
+                       final long ttl,
+                       final int deduperExpiry) {
         final Put put = new Put(HBaseBloomFilterUtils.rowKeyWithPrefix(
                 Bytes.toBytes(HBaseBloomFilterUtils.getRowKey(shardId, clientId, deDuperName))));
+        final Long expiryTime = new Date().getTime() + ttl;
         put.addColumn(Bytes.toBytes(Constants.HBASE_COLUMN_FAMILY_NAME), Bytes.toBytes(Constants.SHARD_ID_COL_NAME),
                 Bytes.toBytes(shardId));
         entityWithBitPositions.getBitPositions()
                 .forEach(bitPosition -> put.addColumn(
                         Bytes.toBytes(Constants.HBASE_COLUMN_FAMILY_NAME),
-                        Bytes.toBytes(bitPosition),
-                        Bytes.toBytes(true))
-                );
-        put.setTTL(ttl);
+                        Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX),
+                        Bytes.toBytes(expiryTime)));
+        // Per-entity TTL determines the logical expiryTime stored in each cell; deduperExpiry is
+        // applied at the storage level so each cell expires after the configured storage expiry.
+        // HBase setTTL expects milliseconds
+        put.setTTL(TimeUnit.SECONDS.toMillis(deduperExpiry));
         try {
             HBasePutCommand.builder()
                     .hBaseConnection(connection)
@@ -85,13 +92,14 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
     public void batchUpdate(final String deDuperName,
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
-                            final long ttl) {
+                            final long ttl,
+                            final int deduperExpiry) {
         try {
             HBaseBatchPutCommand.builder()
                     .connection(connection)
                     .table(getTableName(level))
                     .puts(HBaseBloomFilterUtils.createBatchPuts(shardGroupedEntities, ttl,
-                            Constants.HBASE_COLUMN_FAMILY_NAME, clientId, deDuperName))
+                            Constants.HBASE_COLUMN_FAMILY_NAME, clientId, deDuperName, deduperExpiry))
                     .build()
                     .execute();
         } catch (IOException e) {
@@ -105,10 +113,13 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
     public int getSetBitsCount(final DeDuper deDuper,
                                final long shardId,
                                final EntityWithBitPositions<T> entityWithBitPositions) {
+        final byte[] columnFamily = Bytes.toBytes(Constants.HBASE_COLUMN_FAMILY_NAME);
         final List<HBaseGetCommand.ColumnInfo> columns = entityWithBitPositions.getBitPositions()
                 .stream()
-                .map(bitPosition -> new HBaseGetCommand.ColumnInfo(Bytes.toBytes(Constants.HBASE_COLUMN_FAMILY_NAME),
-                        Bytes.toBytes(bitPosition)))
+                .flatMap(bitPosition -> Stream.of(
+                        new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition)),
+                        new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX))
+                ))
                 .collect(Collectors.toList());
         try {
             final Map<HBaseGetCommand.ColumnInfo, byte[]> columnInfoMap = HBaseGetCommand.builder()
@@ -119,12 +130,13 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                     .columnInfos(columns)
                     .build()
                     .execute();
-            return (int) columnInfoMap.entrySet()
+            final long currentTime = new Date().getTime();
+            return (int) entityWithBitPositions.getBitPositions()
                     .stream()
-                    .filter(columnInfoEntry ->
-                            !Objects.isNull(columnInfoEntry.getValue())
-                                    && Bytes.toBoolean(columnInfoEntry.getValue())
-                    )
+                    .filter(bitPosition -> HBaseBloomFilterUtils.isBitSet(
+                            columnInfoMap.get(new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition))),
+                            columnInfoMap.get(new HBaseGetCommand.ColumnInfo(columnFamily, Bytes.toBytes(bitPosition + Constants.HBASE_TTL_COL_SUFFIX))),
+                            currentTime))
                     .count();
         } catch (IOException e) {
             throw SolusException.propagate(
@@ -142,7 +154,8 @@ public class HBaseDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                     shardGroupedEntities, Constants.HBASE_COLUMN_FAMILY_NAME, clientId, deDuper.getName()),
                     connection, getTableName(deDuper.getDeDuperConfig().getDeDuperLevel())
             );
-            final Map<Long, List<Integer>> hBaseResultMap = HBaseBloomFilterUtils.getResultMap(getCommand.execute());
+            final long currentTime = new Date().getTime();
+            final Map<Long, List<Integer>> hBaseResultMap = HBaseBloomFilterUtils.getResultMap(getCommand.execute(), shardGroupedEntities, currentTime);
 
             return shardGroupedEntities.entrySet().stream()
                     .flatMap(shardEntitiesEntry -> {

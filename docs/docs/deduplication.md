@@ -7,9 +7,10 @@ Each deduper is created with a `DeDuperConfig` that controls the Bloom filter pa
 | Parameter | Type | Default | Min | Max | Description |
 |-----------|------|---------|-----|-----|-------------|
 | `noOfHashFunctions` | `int` | 7 | 7 | 13 | Number of hash functions for the Bloom filter. More functions reduce false positives but increase write cost. |
-| `noOfShards` | `long` | 10,000,000 | 10,000,000 | 150,000,000 | Number of shards for distributing data. Each entity is assigned to one shard via Murmur3 hashing. |
+| `noOfShards` | `long` | 1,000,000 | 1,000,000 | 150,000,000 | Number of shards for distributing data. Each entity is assigned to one shard via Murmur3 hashing. |
 | `bitsPerShard` | `int` | 1,000 | 1,000 | 30,000 | Number of bit positions in each shard's Bloom filter. |
 | `deDuperLevel` | `DeDuperLevel` | `XDC` | — | — | `DC` (datacenter-local) or `XDC` (cross-datacenter). |
+| `expiryInSeconds` | `int` | 864,000 (10 days) | — | — | Time-to-live in seconds applied to the stored entity. |
 
 ```java
 DeDuperConfig config = DeDuperConfig.builder()
@@ -19,6 +20,10 @@ DeDuperConfig config = DeDuperConfig.builder()
     .deDuperLevel(DeDuperLevel.XDC)
     .build();
 ```
+
+### TTL
+
+Every entity is stored with the TTL (in milliseconds) passed to `add(...)`. Once this TTL elapses, the entity's bits are treated as expired and the entity is reported as absent — the stored data itself is not deleted at that point. Physical removal is governed by `expiryInSeconds`: the storage backend automatically deletes the stored data once this duration elapses.
 
 !!! warning "Immutable after registration"
     

@@ -26,6 +26,7 @@ import com.aerospike.client.BatchRead;
 import com.aerospike.client.BatchWrite;
 import com.aerospike.client.ResultCode;
 import com.aerospike.client.Operation;
+import com.aerospike.client.policy.BatchWritePolicy;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
 import com.github.rholder.retry.RetryException;
@@ -62,7 +63,6 @@ import java.util.stream.Collectors;
  */
 @AllArgsConstructor
 public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
-    private static final int BIT_INFO_TTL = 1000000;
     private static final String BIT_TTL_BIN_NAME_FORMAT = "%s_%s_%s";
     private static final String BIT_TTL_BIN_NAME_FORMAT_V2 = "%s%s";
     private static final String BIT_TTL_BIN_NAME_PREFIX = "b";
@@ -81,11 +81,14 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                        final long shardId,
                        final DeDuperLevel level,
                        final EntityWithBitPositions<T> entityWithBitPositions,
-                       final long ttl) {
+                       final long ttl,
+                       final int deduperExpiry) {
         try {
             final WritePolicy writePolicy = new WritePolicy(aerospikeClient.getWritePolicyDefault());
             writePolicy.recordExistsAction = RecordExistsAction.UPDATE;
-            writePolicy.expiration = BIT_INFO_TTL;
+            // Per-entity TTL determines the logical expiryTime stored in each bin; deduperExpiry (seconds)
+            // is applied at the storage level as the record expiration.
+            writePolicy.expiration = deduperExpiry;
             writePolicy.sendKey = true;
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
@@ -110,11 +113,12 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
     public void batchUpdate(final String deDuperName,
                             final DeDuperLevel level,
                             final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
-                            final long ttl) {
+                            final long ttl,
+                            final int deduperExpiry) {
         try {
             // alter operations for all bits with new ttl
             final Long expiryTime = new Date().getTime() + ttl;
-            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime);
+            final List<BatchRecord> batchWrites = buildBatchWrites(deDuperName, level, shardGroupedEntities, expiryTime, deduperExpiry);
             AerospikeUtils.retryer.call(() ->
                     aerospikeClient.operate(aerospikeClient.getBatchPolicyDefault(), batchWrites));
         } catch (ExecutionException e) {
@@ -250,7 +254,13 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
     private List<BatchRecord> buildBatchWrites(final String deDuperName,
                                                final DeDuperLevel level,
                                                final Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities,
-                                               final Long expiryTime) {
+                                               final Long expiryTime,
+                                               final int deduperExpiry) {
+        final BatchWritePolicy batchWritePolicy = new BatchWritePolicy(aerospikeClient.getBatchWritePolicyDefault());
+        batchWritePolicy.recordExistsAction = RecordExistsAction.UPDATE;
+        // deduperExpiry (seconds) drives the storage-level record expiration.
+        batchWritePolicy.expiration = deduperExpiry;
+        batchWritePolicy.sendKey = true;
         return shardGroupedEntities.entrySet()
                 .stream()
                 .map(shardEntitiesEntry -> {
@@ -269,7 +279,7 @@ public class AerospikeDeDuperDataStore<T> implements IDeDuperDataStore<T> {
                             operations
                     );
                 })
-                .map(keyBinsPair -> (BatchRecord) new BatchWrite(keyBinsPair.getKey(), keyBinsPair.getValue()))
+                .map(keyBinsPair -> (BatchRecord) new BatchWrite(batchWritePolicy, keyBinsPair.getKey(), keyBinsPair.getValue()))
                 .toList();
     }
 

@@ -118,8 +118,8 @@ See [False Positive Rates](deduplication.md#false-positive-rates) for details.
 
 ### Add entities
 
-Adds an entity to the deduper with a TTL. After the TTL expires, the entity is automatically removed by the storage
-backend.
+Adds an entity to the deduper with a TTL in milliseconds. Once the TTL elapses, the entity is treated as absent and
+can be added again. The storage backend physically removes stored data after `DeDuperConfig.expiryInSeconds`.
 
 ```java
 // Single entity — TTL in milliseconds

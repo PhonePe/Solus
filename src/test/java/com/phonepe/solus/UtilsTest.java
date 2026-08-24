@@ -16,9 +16,11 @@
 
 package com.phonepe.solus;
 
+import com.phonepe.solus.filter.impl.hbase.HBaseBloomFilterUtils;
 import com.phonepe.solus.shard.ShardCalculator;
 import com.phonepe.solus.util.SizeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,4 +43,13 @@ public class UtilsTest {
         Assert.assertEquals(shardId, shardCalculator.getShardId(10000L, numShards));
     }
 
+    @Test
+    public void testHBaseBitSetDualRead() {
+        final long now = System.currentTimeMillis();
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(null, null, now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(false), null, now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), null, now));
+        Assert.assertTrue(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now + 10000L), now));
+        Assert.assertFalse(HBaseBloomFilterUtils.isBitSet(Bytes.toBytes(true), Bytes.toBytes(now - 10000L), now));
+    }
 }

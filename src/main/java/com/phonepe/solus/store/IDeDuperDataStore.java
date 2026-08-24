@@ -32,9 +32,11 @@ public interface IDeDuperDataStore<T> {
      * @param shardId                shard identifier computed for the entity
      * @param level                  configured deduper level
      * @param entityWithBitPositions entity and resolved bit positions
-     * @param ttl                    ttl for persisted data
+     * @param ttl                    per-entity ttl in ms;
+     *                               each stored bit is tagged with {@code now + ttl} as its logical expiry time
+     * @param deduperExpiry          deduperExpiry defines storage-level expiration in seconds
      */
-    void update(String deDuperName, long shardId, DeDuperLevel level, EntityWithBitPositions<T> entityWithBitPositions, long ttl);
+    void update(String deDuperName, long shardId, DeDuperLevel level, EntityWithBitPositions<T> entityWithBitPositions, long ttl, int deduperExpiry);
 
     /**
      * Updates bit positions for a batch of entities grouped by shard.
@@ -42,9 +44,11 @@ public interface IDeDuperDataStore<T> {
      * @param deDuperName          name of the deduper
      * @param level                configured deduper level
      * @param shardGroupedEntities entities grouped by shard id
-     * @param ttl                  ttl for persisted data
+     * @param ttl                  per-entity ttl in ms;
+     *                             each stored bit is tagged with {@code now + ttl} as its logical expiry time
+     * @param deduperExpiry        deduperExpiry defines storage-level expiration in seconds
      */
-    void batchUpdate(String deDuperName, DeDuperLevel level, Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities, long ttl);
+    void batchUpdate(String deDuperName, DeDuperLevel level, Map<Long, List<EntityWithBitPositions<T>>> shardGroupedEntities, long ttl, int deduperExpiry);
 
     /**
      * Returns the number of already-set bits for an entity.

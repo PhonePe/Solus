@@ -16,6 +16,8 @@
 
 package com.phonepe.solus.store.aerospike;
 
+import static com.phonepe.solus.config.DeDuperConfig.DEFAULT_EXPIRY_SECONDS;
+
 import com.aerospike.client.Record;
 import com.aerospike.client.Key;
 import com.aerospike.client.Bin;
@@ -59,6 +61,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
     private static final String BITS_PER_SHARD_BIN = "bps";
     private static final String ACTIVE_BIN = "active";
     private static final String LEVEL_BIN = "level";
+    private static final String EXPIRY_IN_SECONDS_BIN = "exp";
     private static final int AS_FOREVER_EXPIRATION_TTL = -1;
     private static final String ACTIVE_BIN_INDEX_FORMAT = "%s_%s";
     private static final String FARM_BIN = "farm";
@@ -199,6 +202,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
             }
 
             final String level = (String) AerospikeUtils.getFarmSpecificBinValue(asRecord, LEVEL_BIN, latestUpdateFarmForThisRecord);
+            final Number expiryInSeconds = (Number) AerospikeUtils.getFarmSpecificBinValue(asRecord, EXPIRY_IN_SECONDS_BIN, latestUpdateFarmForThisRecord);
             return Optional.of(DeDuper.builder()
                     .name((String) AerospikeUtils.getFarmSpecificBinValue(asRecord, NAME_BIN, latestUpdateFarmForThisRecord))
                     .deDuperConfig(DeDuperConfig.builder()
@@ -211,6 +215,9 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
                             .deDuperLevel(Objects.nonNull(level)
                                     ? DeDuperLevel.valueOf(level)
                                     : DeDuperLevel.XDC)
+                            .expiryInSeconds(Objects.nonNull(expiryInSeconds)
+                                    ? expiryInSeconds.intValue()
+                                    : DEFAULT_EXPIRY_SECONDS)
                             .build())
                     .clientId(clientId)
                     .farms(storedFarms)
@@ -247,6 +254,7 @@ public class AerospikeDeDuperMetaStore implements IDeDuperMetaStore {
                     new Bin(AerospikeUtils.getBin(BITS_PER_SHARD_BIN, farm), deDuperConfig.getBitsPerShard()),
                     new Bin(AerospikeUtils.getBin(ACTIVE_BIN, farm), status),
                     new Bin(AerospikeUtils.getBin(LEVEL_BIN, farm), deDuperConfig.getDeDuperLevel()),
+                    new Bin(AerospikeUtils.getBin(EXPIRY_IN_SECONDS_BIN, farm), deDuperConfig.getExpiryInSeconds()),
                     new Bin(AerospikeUtils.getBin(UPDATED_BIN, farm), System.currentTimeMillis()),
                     new Bin(AerospikeUtils.getBin(FARM_BIN, farm), true)
             );
