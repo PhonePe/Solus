@@ -30,10 +30,22 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build and analyze
+      # Build + test + jacoco on JDK 17. Skip Sonar here (it requires Java 21+).
+      - name: Build and test (JDK 17)
         env:
           USER_NAME: ${{ secrets.PPE_USER_NAME }}
           ACCESS_TOKEN: ${{ secrets.PPE_ACCESS_TOKEN }}
+        run: mvn -B verify -Dsonar.skip=true
+
+      # Switch the JVM to 21 ONLY to run the SonarCloud scanner.
+      - name: Set up JDK 21 for Sonar
+        uses: actions/setup-java@v3
+        with:
+          java-version: 21
+          distribution: 'zulu'
+
+      - name: SonarCloud analysis (JDK 21)
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=PhonePe_Solus
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=PhonePe_Solus
