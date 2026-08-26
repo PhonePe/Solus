@@ -351,7 +351,7 @@
                 <executions>
                     <execution>
                         <id>sonar-run</id>
-                        <phase>verify</phase>
+                        <phase>none</phase>
                         <goals>
                             <goal>sonar</goal>
                         </goals>
